@@ -1,47 +1,114 @@
-import { useEffect, useState } from 'react';
-import type { TableInfo } from '../data/mockData';
+import { useEffect, useState, useCallback } from 'react';
+import type { DbTable, DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
-import { X, Database } from 'lucide-react';
+import { X, Database, Save, FilePlus } from 'lucide-react';
+import { api } from '../services/api';
 
 
 interface QueryModalProps {
     isOpen: boolean;
     onClose: () => void;
-    table: TableInfo | null;
+    table: DbTable;
 }
 
 export function QueryModal({ isOpen, onClose, table }: QueryModalProps) {
-    const [currentSql, setCurrentSql] = useState('');
+    const [queries, setQueries] = useState<DbQuery[]>([]);
+    const [selectedQuery, setSelectedQuery] = useState<DbQuery | null>(null);
 
-    // Update SQL when table changes
-    useEffect(() => {
-        if (table && table.examples.length > 0) {
-            setCurrentSql(table.examples[0].sql);
-        } else {
-            setCurrentSql('');
+    // Editor State
+    const [sqlCode, setSqlCode] = useState('');
+    const [title, setTitle] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [isNewMode, setIsNewMode] = useState(false);
+
+    const fetchQueries = useCallback(async () => {
+        if (!table) return;
+        try {
+            const data = await api.getQueries(table.id);
+            setQueries(data);
+        } catch (error) {
+            console.error('Failed to fetch queries:', error);
         }
     }, [table]);
 
-    if (!isOpen || !table) return null;
+    useEffect(() => {
+        if (isOpen && table) {
+            fetchQueries();
+            resetEditor(); // Reset to "New Query" state initially
+        }
+    }, [isOpen, table, fetchQueries]);
+
+    const resetEditor = () => {
+        setSelectedQuery(null);
+        setSqlCode('');
+        setTitle('New Query');
+        setIsNewMode(true);
+    };
+
+    const handleSelectQuery = (query: DbQuery) => {
+        setSelectedQuery(query);
+        setSqlCode(query.sql_code);
+        setTitle(query.title);
+        setIsNewMode(false);
+    };
+
+    const handleSave = async () => {
+        if (!title.trim() || !sqlCode.trim()) {
+            alert('Title and SQL Code are required.');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            if (isNewMode || !selectedQuery) {
+                // Create
+                const newQuery = await api.createQuery(table.id, title, sqlCode);
+                setQueries([...queries, newQuery]);
+                handleSelectQuery(newQuery); // Switch to view mode
+            } else {
+                // Update
+                const updated = await api.updateQuery(selectedQuery.id, title, sqlCode);
+                setQueries(queries.map(q => q.id === updated.id ? updated : q));
+                setSelectedQuery(updated);
+            }
+        } catch (error) {
+            console.error('Failed to save query:', error);
+            alert('Failed to save.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDeleteQuery = async (id: string) => {
+        try {
+            await api.deleteQuery(id);
+            setQueries(queries.filter(q => q.id !== id));
+            if (selectedQuery?.id === id) {
+                resetEditor();
+            }
+        } catch (error) {
+            console.error('Failed to delete query:', error);
+        }
+    };
+
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 backdrop-blur-sm bg-black/60 transition-opacity animate-in fade-in duration-200">
-            {/* Backdrop click to close */}
             <div className="absolute inset-0" onClick={onClose} />
 
-            {/* Modal Content */}
             <div className="relative w-full max-w-6xl h-[85vh] bg-[#1a1b26] rounded-xl shadow-2xl border border-slate-700/50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-700">
+                <div className="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-700 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-slate-800 rounded-lg border border-slate-700">
                             <Database className="w-5 h-5 text-cyan-400" />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                                {table.tableName}
+                                {table.table_name}
                                 <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                                     Table
                                 </span>
@@ -60,15 +127,45 @@ export function QueryModal({ isOpen, onClose, table }: QueryModalProps) {
                 {/* Body */}
                 <div className="flex-1 flex overflow-hidden">
                     {/* Left: Editor (70%) */}
-                    <div className="w-[70%] p-4 bg-[#1a1b26]">
-                        <SqlEditor code={currentSql} onChange={setCurrentSql} />
+                    <div className="w-[70%] flex flex-col bg-[#1e1e1e]">
+                        {/* Editor Toolbar */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#252526]">
+                            <input
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                className="bg-transparent text-slate-200 font-medium focus:outline-none focus:border-cyan-500 border-b border-transparent px-1 transition-colors w-1/2"
+                                placeholder="Query Title..."
+                            />
+                            <div className="flex items-center gap-2">
+                                {isNewMode && (
+                                    <span className="text-xs text-yellow-500 flex items-center gap-1 mr-2 px-2 py-1 bg-yellow-500/10 rounded">
+                                        <FilePlus className="w-3 h-3" /> New
+                                    </span>
+                                )}
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50"
+                                >
+                                    <Save className="w-3.5 h-3.5" />
+                                    {isSaving ? 'Saving...' : 'Save'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-hidden p-0 relative">
+                            <SqlEditor code={sqlCode} onChange={setSqlCode} />
+                        </div>
                     </div>
 
                     {/* Right: Examples (30%) */}
-                    <div className="w-[30%]">
+                    <div className="w-[30%] h-full overflow-hidden">
                         <ExampleList
-                            examples={table.examples}
-                            onSelect={(sql) => setCurrentSql(sql)}
+                            queries={queries}
+                            selectedQueryId={selectedQuery?.id || null}
+                            onSelect={handleSelectQuery}
+                            onDelete={handleDeleteQuery}
+                            onCreate={resetEditor}
                         />
                     </div>
                 </div>
