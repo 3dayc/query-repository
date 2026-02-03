@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import type { DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
-import { Database, Save, FilePlus } from 'lucide-react';
+import { Database, Save, FilePlus, Pencil } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
@@ -171,12 +171,17 @@ export function MainContent() {
                     {/* Editor Toolbar (Only visible if a query is selected) */}
                     {selectedQuery ? (
                         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#252526]">
-                            <input
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                className="bg-transparent text-slate-200 font-medium focus:outline-none focus:border-cyan-500 border-b border-transparent px-1 transition-colors w-1/2"
-                                placeholder="Query Title..."
-                            />
+                            <div className="flex items-center gap-2 w-1/2 group">
+                                <div className="p-1.5 rounded-full bg-slate-800 text-slate-400 group-hover:text-cyan-400 transition-colors">
+                                    <Pencil className="w-4 h-4" />
+                                </div>
+                                <input
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    className="flex-1 bg-transparent text-slate-200 font-medium focus:outline-none border-b border-transparent focus:border-cyan-500 hover:border-slate-700 px-1 py-0.5 transition-all"
+                                    placeholder="Query Title..."
+                                />
+                            </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleUpdate}
