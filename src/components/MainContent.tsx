@@ -112,6 +112,13 @@ export function MainContent() {
                     <p className="text-slate-400 text-lg">
                         Select a file from the sidebar to start editing queries.
                     </p>
+
+                    <div className="flex items-center justify-center gap-2 pt-8">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                        <span className="text-sm font-medium text-slate-500 tracking-wide font-mono">
+                            Supabase Connected
+                        </span>
+                    </div>
                 </div>
             </div>
         );
