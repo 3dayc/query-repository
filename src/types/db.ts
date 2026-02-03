@@ -1,7 +1,16 @@
+export interface DbFolder {
+    id: string;
+    name: string;
+    order_index: number;
+    created_at: string;
+}
+
 export interface DbTable {
     id: string;
     table_name: string;
     description: string | null;
+    folder_id: string | null;
+    order_index: number;
     created_at: string;
 }
 
@@ -10,6 +19,7 @@ export interface DbQuery {
     table_id: string;
     title: string;
     sql_code: string;
+    order_index: number;
     created_at: string;
 }
 
