@@ -200,7 +200,7 @@ export function MainContent() {
                         selectedQueryId={selectedQuery?.id || null}
                         onSelect={handleSelectQuery}
                         onDelete={handleDeleteQuery}
-                        onCreate={() => setIsModalOpen(true)}
+
                         onReorder={async (newQueries) => {
                             // Optimistic Update
                             setQueries(newQueries);

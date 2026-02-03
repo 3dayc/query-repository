@@ -1,5 +1,5 @@
 import { useAppStore } from '../store/useAppStore';
-import { AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 import clsx from 'clsx';
 
 export function ConfirmDialog() {

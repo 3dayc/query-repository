@@ -9,11 +9,7 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
-    DragOverlay,
-    defaultDropAnimationSideEffects,
-    type DragStartEvent,
     type DragEndEvent,
-    type DropAnimation
 } from '@dnd-kit/core';
 import {
     arrayMove,
@@ -23,14 +19,13 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState } from 'react';
+
 
 interface ExampleListProps {
     queries: DbQuery[];
     selectedQueryId: string | null;
     onSelect: (query: DbQuery) => void;
     onDelete: (id: string) => void;
-    onCreate: () => void;
     onReorder: (queries: DbQuery[]) => void;
 }
 
@@ -101,7 +96,7 @@ function SortableQueryItem({ query, selectedQueryId, onSelect, onDelete }: {
     );
 }
 
-export function ExampleList({ queries, selectedQueryId, onSelect, onDelete, onCreate, onReorder }: ExampleListProps) {
+export function ExampleList({ queries, selectedQueryId, onSelect, onDelete, onReorder }: ExampleListProps) {
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })

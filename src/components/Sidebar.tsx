@@ -329,7 +329,7 @@ export function Sidebar() {
             if (activeTable && overTable) {
                 // Optimistic Local Update
                 // We need to update the table's location in our local store immediately
-                const updatedTable = { ...activeTable, folder_id: overTable.folder_id, order_index: overTable.order_index }; // Simplified order logic for now (insert before/after is hard without full list reorder logic locally)
+                // const updatedTable = { ...activeTable, folder_id: overTable.folder_id, order_index: overTable.order_index }; // Simplified order logic for now (insert before/after is hard without full list reorder logic locally)
 
                 // For a true flicker-free experience on DnD reorder, we usually need 'arrayMove' on the whole sub-list.
                 // Given the constraints and the simplified requirement, let's just update the folder_id locally if changed.
@@ -383,7 +383,7 @@ export function Sidebar() {
         setIsCreatingFolder(false);
 
         try {
-            const realFolder = await api.createFolder(newFolderName, folders.length);
+            await api.createFolder(newFolderName, folders.length);
             // Replace optimstic folder with real one? 
             // Zustand store replace pattern is tricky without ID. 
             // For now, silent fetch is safer to get real ID for future ops.
