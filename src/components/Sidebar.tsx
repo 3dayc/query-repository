@@ -261,7 +261,8 @@ export function Sidebar() {
         setFolders,
         addFolder,
         addTable,
-        updateTable
+        updateTable,
+        setSelectedTableId
     } = useAppStore();
 
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -483,7 +484,10 @@ export function Sidebar() {
             />
             {/* Header */}
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div
+                    className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => setSelectedTableId(null)}
+                >
                     <Database className="text-cyan-500 w-5 h-5 shadow-glow-cyan" />
                     <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent tracking-tight">
                         AIR-SQL
