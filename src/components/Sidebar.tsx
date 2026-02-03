@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
     DndContext,
     closestCenter,
@@ -444,14 +444,49 @@ export function Sidebar() {
         }
     };
 
+    // Resizable Sidebar Logic
+    const [sidebarWidth, setSidebarWidth] = useState(288); // Default w-72 (288px)
+    const [isResizing, setIsResizing] = useState(false);
+
+    const startResizing = useCallback((mouseDownEvent: React.MouseEvent) => {
+        setIsResizing(true);
+        mouseDownEvent.preventDefault();
+
+        const startWidth = sidebarWidth;
+        const startX = mouseDownEvent.clientX;
+
+        const doDrag = (mouseMoveEvent: MouseEvent) => {
+            const delta = mouseMoveEvent.clientX - startX;
+            const newWidth = Math.max(200, Math.min(600, startWidth + delta)); // Min 200px, Max 600px
+            setSidebarWidth(newWidth);
+        };
+
+        const stopDrag = () => {
+            setIsResizing(false);
+            document.removeEventListener('mousemove', doDrag);
+            document.removeEventListener('mouseup', stopDrag);
+        };
+
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', stopDrag);
+    }, [sidebarWidth]);
+
     return (
-        <div className="w-72 bg-[#0f1016] h-screen border-r border-slate-800 flex flex-col flex-shrink-0 select-none">
+        <div style={{ width: sidebarWidth }} className="bg-[#0f1016] h-screen border-r border-slate-800 flex flex-col flex-shrink-0 select-none relative group/sidebar">
+            {/* Resizer Handle */}
+            <div
+                className={clsx(
+                    "absolute top-0 right-0 w-1 h-full cursor-col-resize z-50 transition-colors",
+                    isResizing ? "bg-cyan-500" : "hover:bg-cyan-500/50 bg-transparent"
+                )}
+                onMouseDown={startResizing}
+            />
             {/* Header */}
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Database className="text-cyan-500 w-5 h-5 shadow-glow-cyan" />
                     <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent tracking-tight">
-                        AIR SQL
+                        AIR-SQL
                     </h1>
                 </div>
                 <div className="flex gap-1">
@@ -569,7 +604,7 @@ export function Sidebar() {
 
             {/* Footer */}
             <div className="p-3 border-t border-slate-800 text-[10px] text-slate-600 text-center">
-                NOL-UNIVERSE
+                NOL UNIVERSE
             </div>
 
             <TableEditModal

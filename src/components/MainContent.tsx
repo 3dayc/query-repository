@@ -23,23 +23,33 @@ export function MainContent() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const fetchQueries = useCallback(async () => {
-        if (!table) return;
+        if (!table) return [];
         try {
             const data = await api.getQueries(table.id);
             setQueries(data);
+            return data;
         } catch (error) {
             console.error('Failed to fetch queries:', error);
+            return [];
         }
     }, [table]);
 
     useEffect(() => {
         if (table) {
-            fetchQueries();
-            // Default: Select first query if exists, or show blank/placeholder?
-            // Actually, if we don't have "New Mode" inline, we should probably just clear selection.
+            // Reset state first
             setSelectedQuery(null);
             setSqlCode('');
             setTitle('');
+
+            // Fetch and auto-select
+            fetchQueries().then(data => {
+                if (data && data.length > 0) {
+                    const firstQuery = data[0];
+                    setSelectedQuery(firstQuery);
+                    setSqlCode(firstQuery.sql_code);
+                    setTitle(firstQuery.title);
+                }
+            });
         }
     }, [table, fetchQueries]);
 

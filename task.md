@@ -4,6 +4,10 @@
 - [x] `npm run build` 명령어 실행
 - [x] 빌드 오류 발생 시 수정 (사용하지 않는 변수 및 import 제거)
 
-## 개발 서버 실행
+## 개발 서버 실행 (완료)
 - [x] `npm run dev` 명령어 실행
 - [x] 서버 정상 구동 확인 (http://localhost:5173/)
+
+## 기능 추가 (완료)
+- [x] Sidebar (LNB) Resizable 기능 구현
+- [x] 테이블 선택 시 첫 번째 쿼리 자동 선택 기능 구현
