@@ -262,7 +262,8 @@ export function Sidebar() {
         addFolder,
         addTable,
         updateTable,
-        setSelectedTableId
+        setSelectedTableId,
+        setTables
     } = useAppStore();
 
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -328,25 +329,49 @@ export function Sidebar() {
             const overTable = tables.find(t => t.id === overId);
 
             if (activeTable && overTable) {
-                // Optimistic Local Update
-                // We need to update the table's location in our local store immediately
-                // const updatedTable = { ...activeTable, folder_id: overTable.folder_id, order_index: overTable.order_index }; // Simplified order logic for now (insert before/after is hard without full list reorder logic locally)
+                // Same Folder: Reorder
+                if (activeTable.folder_id === overTable.folder_id) {
+                    const currentFolderId = activeTable.folder_id;
+                    // Get items in this folder sorted
+                    const folderItems = tables
+                        .filter(t => t.folder_id === currentFolderId)
+                        .sort((a, b) => a.order_index - b.order_index);
 
-                // For a true flicker-free experience on DnD reorder, we usually need 'arrayMove' on the whole sub-list.
-                // Given the constraints and the simplified requirement, let's just update the folder_id locally if changed.
-                if (activeTable.folder_id !== overTable.folder_id) {
-                    updateTable({ ...activeTable, folder_id: overTable.folder_id });
-                }
+                    const oldIndex = folderItems.findIndex(t => t.id === activeId);
+                    const newIndex = folderItems.findIndex(t => t.id === overId);
 
-                try {
-                    if (activeTable.folder_id === overTable.folder_id) {
-                        await api.updateTableLocation(activeId, activeTable.folder_id, overTable.order_index);
-                    } else {
-                        await api.updateTableLocation(activeId, overTable.folder_id, overTable.order_index);
+                    if (oldIndex !== newIndex) {
+                        // Reorder locally and update indices
+                        const newFolderItems = arrayMove(folderItems, oldIndex, newIndex).map((t, index) => ({
+                            ...t,
+                            order_index: index
+                        }));
+
+                        // Update global store
+                        const otherItems = tables.filter(t => t.folder_id !== currentFolderId);
+                        setTables([...otherItems, ...newFolderItems]);
+
+                        // API Update (Parallel)
+                        // Note: Updating all might be heavy but ensures consistency
+                        Promise.all(newFolderItems.map(t =>
+                            api.updateTableLocation(t.id, t.folder_id, t.order_index)
+                        )).catch(e => {
+                            console.error('Failed to reorder tables:', e);
+                            fetchData(); // Revert on error
+                        });
                     }
-                    // No full fetch needed!
-                } catch (e) {
-                    fetchData();
+                } else {
+                    // Moving to different folder (insert at target position)
+                    // Simplified: Just update folder_id and try to insert near target.
+                    // For thorough implementation, we should reorder the target folder too.
+                    // For now, let's keep the simple "assign folder_id" approach but try to set index.
+                    updateTable({ ...activeTable, folder_id: overTable.folder_id });
+
+                    api.updateTableLocation(activeId, overTable.folder_id, overTable.order_index)
+                        .catch(e => {
+                            console.error(e);
+                            fetchData();
+                        });
                 }
             }
         }
