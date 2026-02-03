@@ -451,7 +451,7 @@ export function Sidebar() {
                 <div className="flex items-center gap-2">
                     <Database className="text-cyan-500 w-5 h-5 shadow-glow-cyan" />
                     <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent tracking-tight">
-                        AIR-SQL
+                        AIR SQL
                     </h1>
                 </div>
                 <div className="flex gap-1">
@@ -569,7 +569,7 @@ export function Sidebar() {
 
             {/* Footer */}
             <div className="p-3 border-t border-slate-800 text-[10px] text-slate-600 text-center">
-                NOL UNIVERSE
+                NOL-UNIVERSE
             </div>
 
             <TableEditModal
