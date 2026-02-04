@@ -5,7 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 export function UrlSyncController() {
     const [searchParams, setSearchParams] = useSearchParams();
     const {
-        tables, folders, isLoading,
+        tables, folders, isLoading, isReady,
         selectedTableId, targetQueryId,
         setSelectedTableId, setTargetQueryId, openFolder
     } = useAppStore();
@@ -15,7 +15,7 @@ export function UrlSyncController() {
 
     // 1. Sync URL -> Store
     useEffect(() => {
-        if (isLoading) return;
+        if (isLoading || !isReady) return;
 
         const currentParamsStr = searchParams.toString();
         if (ignoreNextParamsRef.current === currentParamsStr) {
@@ -82,11 +82,11 @@ export function UrlSyncController() {
             setTargetQueryId(null);
         }
 
-    }, [searchParams, isLoading, isSynced, tables, folders, selectedTableId, targetQueryId, setSelectedTableId, setTargetQueryId, openFolder, setSearchParams]);
+    }, [searchParams, isLoading, isReady, isSynced, tables, folders, selectedTableId, targetQueryId, setSelectedTableId, setTargetQueryId, openFolder, setSearchParams]);
 
     // 2. Sync Store -> URL
     useEffect(() => {
-        if (isLoading || !isSynced) return;
+        if (isLoading || !isReady || !isSynced) return;
 
         const currentParams = new URLSearchParams(searchParams);
         let changed = false;

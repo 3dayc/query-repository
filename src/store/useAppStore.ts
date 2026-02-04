@@ -7,6 +7,7 @@ interface AppState {
     tables: DbTable[];
     selectedTableId: string | null;
     isLoading: boolean;
+    isReady: boolean;
     expandedFolderIds: string[];
     targetQueryId: string | null; // For smart navigation
 
@@ -78,6 +79,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     tables: [],
     selectedTableId: null,
     isLoading: false,
+    isReady: false,
     expandedFolderIds: [],
     targetQueryId: null,
 
@@ -92,7 +94,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         } catch (error) {
             console.error('Failed to fetch data:', error);
         } finally {
-            set({ isLoading: false });
+            set({ isLoading: false, isReady: true });
         }
     },
 
