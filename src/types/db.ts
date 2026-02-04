@@ -3,6 +3,7 @@ export interface DbFolder {
     name: string;
     order_index: number;
     created_at: string;
+    deleted_at?: string | null;
 }
 
 export interface DbTable {
@@ -13,6 +14,7 @@ export interface DbTable {
     folder_id: string | null;
     order_index: number;
     created_at: string;
+    deleted_at?: string | null;
 }
 
 export interface DbQuery {
@@ -22,6 +24,7 @@ export interface DbQuery {
     sql_code: string;
     order_index: number;
     created_at: string;
+    deleted_at?: string | null;
 }
 
 // Joined type for UI convenience

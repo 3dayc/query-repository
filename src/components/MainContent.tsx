@@ -129,7 +129,7 @@ export function MainContent() {
 
     const handleDeleteQuery = async (id: string) => {
         try {
-            await api.deleteQuery(id);
+            await api.softDeleteQuery(id);
             setQueries(queries.filter(q => q.id !== id));
             if (selectedQuery?.id === id) {
                 setSelectedQuery(null);

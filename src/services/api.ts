@@ -3,12 +3,14 @@ import type { DbTable, DbQuery, DbFolder } from '../types/db';
 
 // Tables CRUD
 export const api = {
-    // Fetch all folders
+    // Fetch all folders (Active only)
     getFolders: async (): Promise<DbFolder[]> => {
         const { data, error } = await supabase
             .from('folders')
             .select('*')
-            .order('order_index', { ascending: true });
+            .is('deleted_at', null)
+            .order('order_index', { ascending: true })
+            .order('name', { ascending: true });
 
         if (error) throw error;
         return data || [];
@@ -49,31 +51,41 @@ export const api = {
         return data;
     },
 
-    // Delete a folder (Safe Delete: Move tables to root first)
-    deleteFolder: async (id: string): Promise<void> => {
-        // 1. Unlink tables
-        const { error: updateError } = await supabase
-            .from('tables')
-            .update({ folder_id: null })
-            .eq('folder_id', id);
-
-        if (updateError) throw updateError;
-
-        // 2. Delete folder
+    // Soft Delete Folder
+    softDeleteFolder: async (id: string): Promise<void> => {
         const { error } = await supabase
             .from('folders')
-            .delete()
+            .update({ deleted_at: new Date().toISOString() })
             .eq('id', id);
-
         if (error) throw error;
     },
 
-    // Fetch all tables
+    // Restore Folder
+    restoreFolder: async (id: string): Promise<void> => {
+        const { error } = await supabase
+            .from('folders')
+            .update({ deleted_at: null })
+            .eq('id', id);
+        if (error) throw error;
+    },
+
+    // Hard Delete Folder
+    hardDeleteFolder: async (id: string): Promise<void> => {
+        // 1. Unlink tables (Optional: depends on if we want to delete them or move to root. Moving to root is safer)
+        await supabase.from('tables').update({ folder_id: null }).eq('folder_id', id);
+
+        const { error } = await supabase.from('folders').delete().eq('id', id);
+        if (error) throw error;
+    },
+
+    // Fetch all tables (Active only)
     getTables: async (): Promise<DbTable[]> => {
         const { data, error } = await supabase
             .from('tables')
             .select('*')
-            .order('order_index', { ascending: true });
+            .is('deleted_at', null)
+            .order('order_index', { ascending: true })
+            .order('table_name', { ascending: true });
 
         if (error) throw error;
         return data || [];
@@ -123,37 +135,48 @@ export const api = {
         if (error) throw error;
     },
 
-    // Delete a table
-    deleteTable: async (id: string): Promise<void> => {
+    // Soft Delete Table
+    softDeleteTable: async (id: string): Promise<void> => {
         const { error } = await supabase
             .from('tables')
-            .delete()
+            .update({ deleted_at: new Date().toISOString() })
             .eq('id', id);
-
         if (error) throw error;
     },
 
-    // Queries CRUD
+    // Restore Table
+    restoreTable: async (id: string): Promise<void> => {
+        const { error } = await supabase
+            .from('tables')
+            .update({ deleted_at: null })
+            .eq('id', id);
+        if (error) throw error;
+    },
 
-    // Fetch queries for a specific table
+    // Hard Delete Table
+    hardDeleteTable: async (id: string): Promise<void> => {
+        const { error } = await supabase.from('tables').delete().eq('id', id);
+        if (error) throw error;
+    },
+
+    // Fetch queries for a specific table (Active only)
     getQueries: async (tableId: string): Promise<DbQuery[]> => {
-        // 1. Try with order_index first
         const { data, error } = await supabase
             .from('queries')
             .select('*')
             .eq('table_id', tableId)
+            .is('deleted_at', null)
             .order('order_index', { ascending: true })
             .order('created_at', { ascending: true });
 
         if (!error) return data || [];
 
-        // 2. Fallback: If error (likely column missing), try only created_at
-        console.warn('Failed to sort by order_index, executing fallback sort by created_at:', error.message);
-
+        // Fallback
         const { data: fallbackData, error: fallbackError } = await supabase
             .from('queries')
             .select('*')
             .eq('table_id', tableId)
+            .is('deleted_at', null)
             .order('created_at', { ascending: true });
 
         if (fallbackError) throw fallbackError;
@@ -162,7 +185,6 @@ export const api = {
 
     // Create a new query
     createQuery: async (tableId: string, title: string, sqlCode: string, orderIndex: number = 0): Promise<DbQuery> => {
-        // 1. Try with order_index
         const { data, error } = await supabase
             .from('queries')
             .insert([{ table_id: tableId, title, sql_code: sqlCode, order_index: orderIndex }])
@@ -170,9 +192,6 @@ export const api = {
             .single();
 
         if (!error) return data;
-
-        // 2. Fallback: Try without order_index
-        console.warn('Failed to insert with order_index, executing fallback insert:', error.message);
 
         const { data: fallbackData, error: fallbackError } = await supabase
             .from('queries')
@@ -197,13 +216,27 @@ export const api = {
         return data;
     },
 
-    // Delete a query
-    deleteQuery: async (id: string): Promise<void> => {
+    // Soft Delete Query
+    softDeleteQuery: async (id: string): Promise<void> => {
         const { error } = await supabase
             .from('queries')
-            .delete()
+            .update({ deleted_at: new Date().toISOString() })
             .eq('id', id);
+        if (error) throw error;
+    },
 
+    // Restore Query
+    restoreQuery: async (id: string): Promise<void> => {
+        const { error } = await supabase
+            .from('queries')
+            .update({ deleted_at: null })
+            .eq('id', id);
+        if (error) throw error;
+    },
+
+    // Hard Delete Query
+    hardDeleteQuery: async (id: string): Promise<void> => {
+        const { error } = await supabase.from('queries').delete().eq('id', id);
         if (error) throw error;
     },
 
@@ -213,43 +246,60 @@ export const api = {
             .from('queries')
             .update({ order_index: newIndex })
             .eq('id', id);
-
-        // Graceful failure: If column is missing, just log/ignore but don't crash UI
-        if (error) {
-            console.warn('Failed to update query order (order_index column might be missing):', error.message);
-        }
+        if (error) console.warn('Failed to update query order:', error.message);
     },
+
     // Search Queries
     searchQueries: async (query: string): Promise<any[]> => {
         if (!query.trim()) return [];
-
-        // 1. Find tables matching the description or name
-        const { data: matchingTables, error: tableError } = await supabase
+        const { data: matchingTables } = await supabase
             .from('tables')
             .select('id')
+            .is('deleted_at', null)
             .or(`description.ilike.%${query}%,table_name.ilike.%${query}%`);
-
-        if (tableError) throw tableError;
 
         const tableIds = matchingTables?.map(t => t.id) || [];
         const tableIdFilter = tableIds.length > 0 ? `,table_id.in.(${tableIds.join(',')})` : '';
 
-        // 2. Search queries matching title/sql OR belonging to matching tables
         const { data, error } = await supabase
             .from('queries')
-            .select(`
-                *,
-                tables (
-                    table_name,
-                    description,
-                    folder_id
-                )
-            `)
+            .select(`*, tables (table_name, description, folder_id)`)
+            .is('deleted_at', null)
             .or(`title.ilike.%${query}%,sql_code.ilike.%${query}%${tableIdFilter}`)
             .limit(20);
 
         if (error) throw error;
         return data || [];
+    },
+
+    // Get Trash Items
+    getTrashItems: async () => {
+        const [folders, tables, queries] = await Promise.all([
+            supabase.from('folders').select('*').not('deleted_at', 'is', null).order('deleted_at', { ascending: false }),
+            supabase.from('tables').select('*').not('deleted_at', 'is', null).order('deleted_at', { ascending: false }),
+            supabase.from('queries').select(`*, tables (table_name)`).not('deleted_at', 'is', null).order('deleted_at', { ascending: false })
+        ]);
+
+        return {
+            folders: folders.data || [],
+            tables: tables.data || [],
+            queries: queries.data || []
+        };
+    },
+
+    // Empty Trash
+    emptyTrash: async (): Promise<void> => {
+        // 1. Delete Queries
+        const { error: errorQ } = await supabase.from('queries').delete().not('deleted_at', 'is', null);
+        if (errorQ) throw errorQ;
+
+        // 2. Delete Tables
+        const { error: errorT } = await supabase.from('tables').delete().not('deleted_at', 'is', null);
+        if (errorT) throw errorT;
+
+        // 3. Delete Folders (Foreign keys set to SET NULL automatically unlinks active tables)
+        const { error: errorF } = await supabase.from('folders').delete().not('deleted_at', 'is', null);
+        if (errorF) throw errorF;
     }
 };
 

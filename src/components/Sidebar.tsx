@@ -73,10 +73,10 @@ function SortableFolderItem({ folder, tables, isExpanded, onToggle, onEditTable,
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
-        openConfirm('Delete Folder', `Delete folder "${folder.name}"? Tables inside will be moved to Root.`, async () => {
+        openConfirm('Move to Trash', `Move folder "${folder.name}" to Trash?`, async () => {
             try {
                 removeFolder(folder.id); // Optimistic
-                await api.deleteFolder(folder.id);
+                await api.softDeleteFolder(folder.id);
             } catch (error) {
                 console.error(error);
                 fetchData();
@@ -194,13 +194,13 @@ function SortableFileItem({ table, onEdit }: SortableFileProps) {
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
 
-        openConfirm('Delete File', `Delete file "${table.table_name}"?`, async () => {
+        openConfirm('Move to Trash', `Move file "${table.table_name}" to Trash?`, async () => {
             try {
                 // Optimistic UI
                 removeTable(table.id);
                 if (selectedTableId === table.id) setSelectedTableId(null);
 
-                await api.deleteTable(table.id);
+                await api.softDeleteTable(table.id);
             } catch (e) {
                 console.error(e);
                 fetchData();
@@ -217,6 +217,7 @@ function SortableFileItem({ table, onEdit }: SortableFileProps) {
             onClick={() => {
                 checkUnsavedChanges(() => {
                     setSelectedTableId(table.id);
+                    useAppStore.getState().setViewMode('main');
                     setMobileMenuOpen(false);
                 });
             }}
@@ -284,7 +285,9 @@ export function Sidebar() {
         setSelectedTableId,
         setTables,
         collapseAllFolders,
-        checkUnsavedChanges
+        checkUnsavedChanges,
+        viewMode,
+        setViewMode
     } = useAppStore();
 
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -542,13 +545,14 @@ export function Sidebar() {
                             checkUnsavedChanges(() => {
                                 setSelectedTableId(null);
                                 collapseAllFolders();
+                                setViewMode('main');
                                 setMobileMenuOpen(false);
                             });
                         }}
                     >
                         <Database className="text-cyan-500 w-5 h-5 shadow-glow-cyan" />
                         <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent tracking-tight">
-                            AIR-SQL
+                            NOL UNIVERSE
                         </h1>
                     </div>
                     <div className="flex gap-1">
@@ -674,8 +678,19 @@ export function Sidebar() {
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-slate-800 text-xs text-slate-600 text-center">
-                    NOL UNIVERSE
+                <div className="p-2 border-t border-slate-800">
+                    <button
+                        onClick={() => {
+                            checkUnsavedChanges(() => setViewMode('trash'));
+                        }}
+                        className={clsx(
+                            "w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+                            viewMode === 'trash' ? "bg-slate-800 text-slate-200" : "text-slate-500 hover:bg-slate-800 hover:text-slate-200"
+                        )}
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="text-xs font-medium">Trash Bin</span>
+                    </button>
                 </div>
 
                 <TableEditModal

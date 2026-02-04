@@ -3,9 +3,10 @@ import { Sidebar } from './components/Sidebar';
 import { MainContent } from './components/MainContent';
 import { useAppStore } from './store/useAppStore';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { TrashBin } from './components/TrashBin';
 
 function App() {
-  const { fetchData, isLoading } = useAppStore();
+  const { fetchData, isLoading, viewMode } = useAppStore();
 
   useEffect(() => {
     fetchData();
@@ -22,7 +23,7 @@ function App() {
   return (
     <div className="flex h-screen w-screen bg-[#0f1016] text-slate-200 overflow-hidden font-sans">
       <Sidebar />
-      <MainContent />
+      {viewMode === 'trash' ? <TrashBin /> : <MainContent />}
       <ConfirmDialog />
     </div>
   );

@@ -54,6 +54,10 @@ interface AppState {
     // I will stick to MainContent state for queries to avoid massive refactor, but using API directly.
     // Wait, requirement 5 says "Use React State to partially update UI".
     // I can just pass Reorder function to ExampleList.
+    // View Mode
+    viewMode: 'main' | 'trash';
+    setViewMode: (mode: 'main' | 'trash') => void;
+
     // Toast State
     toast: {
         message: string | null;
@@ -111,6 +115,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     collapseAllFolders: () => set({ expandedFolderIds: [] }),
 
     setTargetQueryId: (id) => set({ targetQueryId: id }),
+
+    viewMode: 'main',
+    setViewMode: (mode) => set({ viewMode: mode }),
 
     isMobileMenuOpen: false,
     toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
