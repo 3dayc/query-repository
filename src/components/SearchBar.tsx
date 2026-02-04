@@ -3,7 +3,7 @@ import { Search, Loader2, FileCode, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
 import type { SearchResult } from '../types/db';
 import { useAppStore } from '../store/useAppStore';
-import clsx from 'clsx';
+
 
 export function SearchBar() {
     const [query, setQuery] = useState('');
@@ -16,7 +16,7 @@ export function SearchBar() {
         openFolder,
         setSelectedTableId,
         setTargetQueryId,
-        folders // We might need this to find folder name if needed, but not strictly required
+
     } = useAppStore();
 
     // Debounce Search
