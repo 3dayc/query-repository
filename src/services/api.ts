@@ -36,6 +36,19 @@ export const api = {
         if (error) throw error;
     },
 
+    // Update folder name
+    updateFolder: async (id: string, name: string): Promise<DbFolder> => {
+        const { data, error } = await supabase
+            .from('folders')
+            .update({ name })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
     // Delete a folder (Safe Delete: Move tables to root first)
     deleteFolder: async (id: string): Promise<void> => {
         // 1. Unlink tables

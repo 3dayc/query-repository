@@ -34,6 +34,7 @@ import { api } from '../services/api';
 import clsx from 'clsx';
 import type { DbFolder, DbTable } from '../types/db';
 import { TableEditModal } from './TableEditModal';
+import { FolderEditModal } from './FolderEditModal';
 
 // --- Sortable Items Components ---
 
@@ -43,9 +44,10 @@ interface SortableFolderProps {
     isExpanded: boolean;
     onToggle: () => void;
     onEditTable: (table: DbTable) => void;
+    onEditFolder: () => void;
 }
 
-function SortableFolderItem({ folder, tables, isExpanded, onToggle, onEditTable }: SortableFolderProps) {
+function SortableFolderItem({ folder, tables, isExpanded, onToggle, onEditTable, onEditFolder }: SortableFolderProps) {
     const {
         attributes,
         listeners,
@@ -117,13 +119,23 @@ function SortableFolderItem({ folder, tables, isExpanded, onToggle, onEditTable 
                     </span>
                 </div>
 
-                {/* Delete Folder */}
-                <button
-                    onClick={handleDelete}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded transition-all"
-                >
-                    <Trash2 className="w-3 h-3" />
-                </button>
+                {/* Actions (Hover) */}
+                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onEditFolder(); }}
+                        className="p-1 hover:bg-slate-600/50 text-slate-500 hover:text-cyan-400 rounded transition-all"
+                        title="Edit Folder"
+                    >
+                        <Pencil className="w-3 h-3" />
+                    </button>
+                    <button
+                        onClick={handleDelete}
+                        className="p-1 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded transition-all"
+                        title="Delete Folder"
+                    >
+                        <Trash2 className="w-3 h-3" />
+                    </button>
+                </div>
             </div>
 
             {/* Nested Files */}
@@ -283,6 +295,9 @@ export function Sidebar() {
 
     // Edit Table State
     const [editingTable, setEditingTable] = useState<DbTable | null>(null);
+
+    // Edit Folder State
+    const [editingFolder, setEditingFolder] = useState<DbFolder | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -475,6 +490,11 @@ export function Sidebar() {
         }
     };
 
+    const handleFolderUpdate = (updatedFolder: DbFolder) => {
+        const newFolders = folders.map(f => f.id === updatedFolder.id ? updatedFolder : f);
+        setFolders(newFolders);
+    };
+
     // Resizable Sidebar Logic
     const [sidebarWidth, setSidebarWidth] = useState(288); // Default w-72 (288px)
     const [isResizing, setIsResizing] = useState(false);
@@ -626,6 +646,7 @@ export function Sidebar() {
                                             isExpanded={expandedFolderIds.includes(folder.id)}
                                             onToggle={() => toggleFolder(folder.id)}
                                             onEditTable={setEditingTable}
+                                            onEditFolder={() => setEditingFolder(folder)}
                                         />
                                     </div>
                                 ))}
@@ -673,6 +694,13 @@ export function Sidebar() {
                     initialName={editingTable?.table_name || ''}
                     initialDescription={editingTable?.description || ''}
                     onSave={handleSaveEdit}
+                />
+
+                <FolderEditModal
+                    isOpen={!!editingFolder}
+                    onClose={() => setEditingFolder(null)}
+                    folder={editingFolder}
+                    onUpdate={handleFolderUpdate}
                 />
             </div>
         </>
