@@ -498,155 +498,179 @@ export function Sidebar() {
         document.addEventListener('mouseup', stopDrag);
     }, [sidebarWidth]);
 
+    const { isMobileMenuOpen, setMobileMenuOpen } = useAppStore();
+
     return (
-        <div style={{ width: sidebarWidth }} className="bg-[#0f1016] h-screen border-r border-slate-800 flex flex-col flex-shrink-0 select-none relative group/sidebar">
-            {/* Resizer Handle */}
-            <div
-                className={clsx(
-                    "absolute top-0 right-0 w-1 h-full cursor-col-resize z-50 transition-colors",
-                    isResizing ? "bg-cyan-500" : "hover:bg-cyan-500/50 bg-transparent"
-                )}
-                onMouseDown={startResizing}
-            />
-            {/* Header */}
-            <div className="h-16 px-4 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+        <>
+            {/* Mobile Overlay */}
+            {isMobileMenuOpen && (
                 <div
-                    className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => {
-                        setSelectedTableId(null);
-                        collapseAllFolders();
-                    }}
-                >
-                    <Database className="text-cyan-500 w-5 h-5 shadow-glow-cyan" />
-                    <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent tracking-tight">
-                        AIR-SQL
-                    </h1>
-                </div>
-                <div className="flex gap-1">
-                    <button
-                        onClick={() => setIsCreatingFolder(true)}
-                        className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-amber-400 transition-colors"
-                        title="New Folder"
-                    >
-                        <Folder className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => { setIsCreatingTable(true); setActiveFolderForNewTable(null); }}
-                        className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors"
-                        title="New File (Root)"
-                    >
-                        <Plus className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                />
+            )}
 
-            {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/20">
-                {/* Folder Creation Form */}
-                {isCreatingFolder && (
-                    <form onSubmit={handleCreateFolder} className="mb-2 px-2 py-2 bg-slate-800/50 rounded border border-slate-700">
-                        <input
-                            autoFocus
-                            placeholder="Folder Name"
-                            value={newFolderName}
-                            onChange={e => setNewFolderName(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500 mb-2"
-                        />
-                        <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => setIsCreatingFolder(false)} className="text-[10px] text-slate-400">Cancel</button>
-                            <button type="submit" className="text-[10px] text-amber-400 font-bold">Create</button>
-                        </div>
-                    </form>
+            <div
+                style={{ width: sidebarWidth }}
+                className={clsx(
+                    "bg-[#0f1016] h-screen border-r border-slate-800 flex flex-col flex-shrink-0 select-none group/sidebar transition-transform duration-300 ease-in-out",
+                    // Mobile Styles (Drawer)
+                    "fixed inset-y-0 left-0 z-50 md:relative",
+                    isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
                 )}
+            >
+                {/* Resizer Handle (Desktop Only) */}
+                <div
+                    className={clsx(
+                        "absolute top-0 right-0 w-1 h-full cursor-col-resize z-50 transition-colors hidden md:block",
+                        isResizing ? "bg-cyan-500" : "hover:bg-cyan-500/50 bg-transparent"
+                    )}
+                    onMouseDown={startResizing}
+                />
 
-                {/* Table Creation Form */}
-                {isCreatingTable && (
-                    <form onSubmit={handleCreateTable} className="mb-2 px-2 py-2 bg-slate-800/50 rounded border border-slate-700">
-                        <div className="text-[10px] text-slate-500 mb-1">
-                            New File in: <span className="text-slate-300">{activeFolderForNewTable ? folders.find(f => f.id === activeFolderForNewTable)?.name : 'Root'}</span>
-                        </div>
-                        <input
-                            autoFocus
-                            placeholder="Table Name"
-                            value={newTableName}
-                            onChange={e => setNewTableName(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 mb-2"
-                        />
-                        <textarea
-                            placeholder="Description (Optional)"
-                            value={newTableDescription}
-                            onChange={e => setNewTableDescription(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 mb-2 resize-none h-12"
-                        />
-                        <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => setIsCreatingTable(false)} className="text-[10px] text-slate-400">Cancel</button>
-                            <button type="submit" className="text-[10px] text-cyan-400 font-bold">Create</button>
-                        </div>
-                    </form>
-                )}
+                {/* Header */}
+                <div className="h-16 px-4 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+                    <div
+                        className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => {
+                            setSelectedTableId(null);
+                            collapseAllFolders();
+                            setMobileMenuOpen(false); // Close on selection
+                        }}
+                    >
+                        <Database className="text-cyan-500 w-5 h-5 shadow-glow-cyan" />
+                        <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent tracking-tight">
+                            AIR-SQL
+                        </h1>
+                    </div>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => setIsCreatingFolder(true)}
+                            className="p-2 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors touch-manipulation"
+                            title="New Folder"
+                        >
+                            <Folder className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => { setIsCreatingTable(true); setActiveFolderForNewTable(null); }}
+                            className="p-2 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors touch-manipulation"
+                            title="New File (Root)"
+                        >
+                            <Plus className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
 
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                >
-                    <SortableContext items={folders.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-1">
-                            {folders.map(folder => (
-                                <SortableFolderItem
-                                    key={folder.id}
-                                    folder={folder}
-                                    tables={tables.filter(t => t.folder_id === folder.id).sort((a, b) => a.order_index - b.order_index)}
-                                    isExpanded={expandedFolderIds.includes(folder.id)}
-                                    onToggle={() => toggleFolder(folder.id)}
-                                    onEditTable={setEditingTable}
-                                />
-                            ))}
-                        </div>
-                    </SortableContext>
-
-                    {/* Uncategorized / Root Files */}
-                    {unorganizedTables.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-slate-800">
-                            <h3 className="px-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Uncategorized</h3>
-                            <SortableContext items={unorganizedTables.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-0.5">
-                                    {unorganizedTables.map(table => (
-                                        <SortableFileItem
-                                            key={table.id}
-                                            table={table}
-                                            onEdit={() => setEditingTable(table)}
-                                        />
-                                    ))}
-                                </div>
-                            </SortableContext>
-                        </div>
+                {/* Content Area */}
+                <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/20">
+                    {/* Folder Creation Form */}
+                    {isCreatingFolder && (
+                        <form onSubmit={handleCreateFolder} className="mb-2 px-2 py-2 bg-slate-800/50 rounded border border-slate-700">
+                            <input
+                                autoFocus
+                                placeholder="Folder Name"
+                                value={newFolderName}
+                                onChange={e => setNewFolderName(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 mb-2"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <button type="button" onClick={() => setIsCreatingFolder(false)} className="px-3 py-1.5 text-xs text-slate-400">Cancel</button>
+                                <button type="submit" className="px-3 py-1.5 text-xs text-amber-400 font-bold">Create</button>
+                            </div>
+                        </form>
                     )}
 
-                    <DragOverlay>
-                        {/* Minimal overlay for dragging visuals */}
-                        {activeId ? (
-                            <div className="px-2 py-1.5 bg-slate-700/80 rounded border border-slate-500 shadow-xl opacity-90 backdrop-blur-sm w-48">
-                                <span className="text-xs text-white break-all">Moving...</span>
+                    {/* Table Creation Form */}
+                    {isCreatingTable && (
+                        <form onSubmit={handleCreateTable} className="mb-2 px-2 py-2 bg-slate-800/50 rounded border border-slate-700">
+                            <div className="text-xs text-slate-500 mb-1">
+                                New File in: <span className="text-slate-300">{activeFolderForNewTable ? folders.find(f => f.id === activeFolderForNewTable)?.name : 'Root'}</span>
                             </div>
-                        ) : null}
-                    </DragOverlay>
-                </DndContext>
-            </div>
+                            <input
+                                autoFocus
+                                placeholder="Table Name"
+                                value={newTableName}
+                                onChange={e => setNewTableName(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 mb-2"
+                            />
+                            <textarea
+                                placeholder="Description (Optional)"
+                                value={newTableDescription}
+                                onChange={e => setNewTableDescription(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 mb-2 resize-none h-16"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <button type="button" onClick={() => setIsCreatingTable(false)} className="px-3 py-1.5 text-xs text-slate-400">Cancel</button>
+                                <button type="submit" className="px-3 py-1.5 text-xs text-cyan-400 font-bold">Create</button>
+                            </div>
+                        </form>
+                    )}
 
-            {/* Footer */}
-            <div className="p-3 border-t border-slate-800 text-[10px] text-slate-600 text-center">
-                NOL UNIVERSE
-            </div>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext items={folders.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-1">
+                                {folders.map(folder => (
+                                    <div key={folder.id} onClick={() => isMobileMenuOpen && setMobileMenuOpen(false)}>
+                                        <SortableFolderItem
+                                            folder={folder}
+                                            tables={tables.filter(t => t.folder_id === folder.id).sort((a, b) => a.order_index - b.order_index)}
+                                            isExpanded={expandedFolderIds.includes(folder.id)}
+                                            onToggle={() => toggleFolder(folder.id)}
+                                            onEditTable={setEditingTable}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </SortableContext>
 
-            <TableEditModal
-                isOpen={!!editingTable}
-                onClose={() => setEditingTable(null)}
-                initialName={editingTable?.table_name || ''}
-                initialDescription={editingTable?.description || ''}
-                onSave={handleSaveEdit}
-            />
-        </div>
+                        {/* Uncategorized / Root Files */}
+                        {unorganizedTables.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-slate-800">
+                                <h3 className="px-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Uncategorized</h3>
+                                <SortableContext items={unorganizedTables.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                                    <div className="space-y-0.5">
+                                        {unorganizedTables.map(table => (
+                                            <div key={table.id} onClick={() => isMobileMenuOpen && setMobileMenuOpen(false)}>
+                                                <SortableFileItem
+                                                    table={table}
+                                                    onEdit={() => setEditingTable(table)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </SortableContext>
+                            </div>
+                        )}
+
+                        <DragOverlay>
+                            {/* Minimal overlay for dragging visuals */}
+                            {activeId ? (
+                                <div className="px-2 py-1.5 bg-slate-700/80 rounded border border-slate-500 shadow-xl opacity-90 backdrop-blur-sm w-48">
+                                    <span className="text-xs text-white break-all">Moving...</span>
+                                </div>
+                            ) : null}
+                        </DragOverlay>
+                    </DndContext>
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 border-t border-slate-800 text-xs text-slate-600 text-center">
+                    NOL UNIVERSE
+                </div>
+
+                <TableEditModal
+                    isOpen={!!editingTable}
+                    onClose={() => setEditingTable(null)}
+                    initialName={editingTable?.table_name || ''}
+                    initialDescription={editingTable?.description || ''}
+                    onSave={handleSaveEdit}
+                />
+            </div>
+        </>
     );
 }

@@ -2,14 +2,14 @@ import { useEffect, useState, useCallback } from 'react';
 import type { DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
-import { Database, Save, FilePlus, Pencil } from 'lucide-react';
+import { Database, Save, FilePlus, Pencil, Menu } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
 import { SearchBar } from './SearchBar';
 
 export function MainContent() {
-    const { selectedTableId, tables, openAlert, targetQueryId, setTargetQueryId } = useAppStore();
+    const { selectedTableId, tables, openAlert, targetQueryId, setTargetQueryId, toggleMobileMenu } = useAppStore();
     const table = tables.find(t => t.id === selectedTableId);
 
     const [queries, setQueries] = useState<DbQuery[]>([]);
@@ -130,7 +130,15 @@ export function MainContent() {
     return (
         <div className="flex-1 flex flex-col h-screen bg-[#13141f] overflow-hidden">
             {/* Global Header (Search) */}
-            <div className="h-16 border-b border-slate-800 bg-[#0f1016] flex items-center px-6 justify-between flex-shrink-0 z-[60]">
+            <div className="h-16 border-b border-slate-800 bg-[#0f1016] flex items-center px-4 md:px-6 justify-between flex-shrink-0 z-[60] gap-4">
+                {/* Mobile Trigger */}
+                <button
+                    className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
+                    onClick={toggleMobileMenu}
+                >
+                    <Menu className="w-6 h-6" />
+                </button>
+
                 <div className="flex-1 max-w-2xl">
                     <SearchBar />
                 </div>
@@ -191,9 +199,9 @@ export function MainContent() {
 
                     {/* Body */}
                     <div className="flex-1 overflow-auto bg-[#1e1e1e]">
-                        <div className="flex h-full min-w-[1000px]">
-                            {/* Left: Editor (70%) */}
-                            <div className="flex-1 flex flex-col border-r border-black/40">
+                        <div className="flex flex-col md:flex-row h-full w-full md:min-w-[1000px] min-w-0">
+                            {/* Left: Editor (Mobile: Top, Desktop: Left 70%) */}
+                            <div className="flex-1 flex flex-col border-r border-slate-800 border-b md:border-b-0 min-h-[50vh] md:min-h-0">
                                 {/* Editor Toolbar (Only visible if a query is selected) */}
                                 {selectedQuery ? (
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#252526]">
@@ -204,7 +212,7 @@ export function MainContent() {
                                             <input
                                                 value={title}
                                                 onChange={(e) => setTitle(e.target.value)}
-                                                className="flex-1 bg-transparent text-slate-200 font-medium focus:outline-none border-b border-transparent focus:border-cyan-500 hover:border-slate-700 px-1 py-0.5 transition-all"
+                                                className="flex-1 bg-transparent text-slate-200 font-medium focus:outline-none border-b border-transparent focus:border-cyan-500 hover:border-slate-700 px-1 py-0.5 transition-all w-full min-w-0"
                                                 placeholder="Query Title..."
                                             />
                                         </div>
@@ -212,10 +220,11 @@ export function MainContent() {
                                             <button
                                                 onClick={handleUpdate}
                                                 disabled={isSaving}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50"
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50 whitespace-nowrap"
                                             >
                                                 <Save className="w-3.5 h-3.5" />
-                                                {isSaving ? 'Saving...' : 'Save Changes'}
+                                                <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save Changes'}</span>
+                                                <span className="sm:hidden">Save</span>
                                             </button>
                                         </div>
                                     </div>
@@ -230,8 +239,8 @@ export function MainContent() {
                                 </div>
                             </div>
 
-                            {/* Right: Examples (30%) */}
-                            <div className="w-[350px] h-full overflow-hidden border-l border-slate-800 bg-[#1a1b26] flex-shrink-0">
+                            {/* Right: Examples (Mobile: Bottom, Desktop: Right 30%) */}
+                            <div className="w-full md:w-[350px] h-[40vh] md:h-full overflow-hidden border-l border-slate-800 bg-[#1a1b26] flex-shrink-0 flex flex-col">
                                 <ExampleList
                                     queries={queries}
                                     selectedQueryId={selectedQuery?.id || null}

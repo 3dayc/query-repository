@@ -18,6 +18,11 @@ interface AppState {
     collapseAllFolders: () => void;
     setTargetQueryId: (id: string | null) => void;
 
+    // Mobile Menu
+    isMobileMenuOpen: boolean;
+    toggleMobileMenu: () => void;
+    setMobileMenuOpen: (isOpen: boolean) => void;
+
     // Optimistic updates (UI only, API calls should be handled by caller or thunk-like pattern)
     setFolders: (folders: DbFolder[]) => void;
     setTables: (tables: DbTable[]) => void;
@@ -93,6 +98,10 @@ export const useAppStore = create<AppState>((set) => ({
     collapseAllFolders: () => set({ expandedFolderIds: [] }),
 
     setTargetQueryId: (id) => set({ targetQueryId: id }),
+
+    isMobileMenuOpen: false,
+    toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
+    setMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
 
     setFolders: (folders) => set({ folders }),
     setTables: (tables) => set({ tables }),

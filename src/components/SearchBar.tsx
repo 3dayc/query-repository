@@ -10,13 +10,13 @@ export function SearchBar() {
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     const {
         openFolder,
         setSelectedTableId,
         setTargetQueryId,
-
     } = useAppStore();
 
     // Debounce Search
@@ -27,7 +27,7 @@ export function SearchBar() {
                 try {
                     const data = await api.searchQueries(query);
                     setResults(data);
-                    setIsOpen(true);
+                    if (!isMobileSearchOpen) setIsOpen(true);
                 } catch (error) {
                     console.error('Search failed:', error);
                 } finally {
@@ -40,7 +40,7 @@ export function SearchBar() {
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [query]);
+    }, [query, isMobileSearchOpen]);
 
     // Click Outside Handling
     useEffect(() => {
@@ -54,27 +54,20 @@ export function SearchBar() {
     }, []);
 
     const handleResultClick = (result: SearchResult) => {
-        // Smart Navigation Logic
         if (result.tables?.folder_id) {
             openFolder(result.tables.folder_id);
         }
         setSelectedTableId(result.table_id);
         setTargetQueryId(result.id);
 
-        // Close search
         setIsOpen(false);
+        setIsMobileSearchOpen(false);
         setQuery('');
     };
 
     // Highlight helper
     const highlightText = (text: string, highlight: string) => {
         if (!highlight.trim()) return text;
-
-        // Simple case-insensitive highlight logic
-        // For long SQL code, we should probably truncate it around the match?
-        // Let's just highlight first match or use simple split for now.
-        // For UI simplicity in dropdown, titles are short. SQL code is long.
-        // We'll trust browser/react rendering for title.
 
         const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
         return (
@@ -91,9 +84,9 @@ export function SearchBar() {
     };
 
     return (
-        <div ref={wrapperRef} className="relative w-full max-w-xl">
-            {/* Input Wrapper */}
-            <div className="relative group">
+        <div ref={wrapperRef} className="relative w-full">
+            {/* Desktop Input */}
+            <div className="hidden md:block relative w-full h-full group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     {isLoading ? (
                         <Loader2 className="h-4 w-4 text-cyan-500 animate-spin" />
@@ -114,9 +107,73 @@ export function SearchBar() {
                 />
             </div>
 
-            {/* Dropdown Results */}
-            {isOpen && (
-                <div className="absolute top-full mt-2 w-full bg-[#1a1b26] border border-slate-700 rounded-lg shadow-2xl overflow-hidden z-[100] max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700">
+            {/* Mobile Trigger Icon */}
+            <button
+                className="md:hidden flex items-center justify-center p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors ml-auto"
+                onClick={() => setIsMobileSearchOpen(true)}
+            >
+                <Search className="w-6 h-6" />
+            </button>
+
+            {/* Mobile Fullscreen Overlay */}
+            {isMobileSearchOpen && (
+                <div className="fixed inset-0 z-[100] bg-[#0f1016] flex flex-col animate-in fade-in duration-200">
+                    <div className="h-16 flex items-center px-4 border-b border-slate-800 gap-3">
+                        <button onClick={() => setIsMobileSearchOpen(false)} className="p-1 -ml-1 text-slate-400">
+                            <ArrowRight className="w-6 h-6 rotate-180" /> {/* Back Icon using ArrowRight */}
+                        </button>
+                        <div className="flex-1 relative">
+                            <input
+                                autoFocus
+                                type="text"
+                                className="w-full bg-transparent text-lg text-slate-200 placeholder-slate-500 focus:outline-none"
+                                placeholder="Search..."
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                            />
+                        </div>
+                        {isLoading && <Loader2 className="h-5 w-5 text-cyan-500 animate-spin" />}
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4">
+                        {results.length > 0 ? (
+                            <ul className="space-y-4">
+                                {results.map((result) => (
+                                    <li
+                                        key={result.id}
+                                        onClick={() => handleResultClick(result)}
+                                        className="p-4 bg-slate-900 rounded-lg border border-slate-800 active:bg-slate-800 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h4 className="text-base font-bold text-slate-200">
+                                                {highlightText(result.title, query)}
+                                            </h4>
+                                            <span className="text-[10px] px-2 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                                                {result.tables?.table_name}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-slate-500 line-clamp-3 font-mono">
+                                            {highlightText(result.sql_code, query)}
+                                        </p>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : query.length > 0 ? (
+                            <div className="text-center text-slate-500 mt-10">
+                                No results found for "{query}"
+                            </div>
+                        ) : (
+                            <div className="text-center text-slate-600 mt-10 text-sm">
+                                Type to search queries...
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Desktop Dropdown Results */}
+            {isOpen && !isMobileSearchOpen && (
+                <div className="absolute top-full mt-2 w-full bg-[#1a1b26] border border-slate-700 rounded-lg shadow-2xl overflow-hidden z-[100] max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 hidden md:block">
                     {results.length > 0 ? (
                         <ul className="divide-y divide-slate-800">
                             {results.map((result) => (
@@ -137,7 +194,6 @@ export function SearchBar() {
                                                 {result.tables?.table_name || 'Unknown Table'}
                                             </span>
                                         </div>
-                                        {/* Snippet preview only if SQL matches? */}
                                         <p className="text-xs text-slate-500 line-clamp-2 font-mono bg-slate-900/50 p-1.5 rounded border border-slate-800/50">
                                             {highlightText(result.sql_code, query)}
                                         </p>
