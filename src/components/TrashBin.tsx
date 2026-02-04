@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
-import { RefreshCw, Trash2, ArrowLeft, Folder, Database, FileText, AlertTriangle, RotateCcw } from 'lucide-react';
-import type { DbFolder, DbTable, DbQuery } from '../types/db';
+import { Trash2, ArrowLeft, Folder, Database, FileText, RotateCcw } from 'lucide-react';
+import type { DbFolder, DbTable } from '../types/db';
 import clsx from 'clsx';
 
 export function TrashBin() {
