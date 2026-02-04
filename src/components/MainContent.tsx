@@ -104,7 +104,7 @@ export function MainContent() {
     const handleCreate = async (newTitle: string, newSql: string) => {
         if (!table) return;
         try {
-            const newQuery = await api.createQuery(table.id, newTitle, newSql);
+            const newQuery = await api.createQuery(table.id, newTitle, newSql, queries.length);
             setQueries([...queries, newQuery]);
             handleSelectQuery(newQuery); // Auto-select the new query
         } catch (error) {

@@ -137,6 +137,7 @@ export const api = {
             .from('queries')
             .select('*')
             .eq('table_id', tableId)
+            .order('order_index', { ascending: true })
             .order('created_at', { ascending: true });
 
         if (error) throw error;
@@ -144,10 +145,10 @@ export const api = {
     },
 
     // Create a new query
-    createQuery: async (tableId: string, title: string, sqlCode: string): Promise<DbQuery> => {
+    createQuery: async (tableId: string, title: string, sqlCode: string, orderIndex: number = 0): Promise<DbQuery> => {
         const { data, error } = await supabase
             .from('queries')
-            .insert([{ table_id: tableId, title, sql_code: sqlCode }])
+            .insert([{ table_id: tableId, title, sql_code: sqlCode, order_index: orderIndex }])
             .select()
             .single();
 
