@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import type { DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
-import { Database, Save, FilePlus, Menu } from 'lucide-react';
+import { Database, Save, FilePlus, Menu, Link as LinkIcon, Pencil, Check } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
@@ -22,11 +22,13 @@ export function MainContent() {
     // Editor State (for editing existing queries)
     const [sqlCode, setSqlCode] = useState('');
     const [title, setTitle] = useState('');
+    const [relatedLink, setRelatedLink] = useState('');
+    const [isLinkEditing, setIsLinkEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     // Derived State for Unsaved Changes
     const isModified = selectedQuery
-        ? (title !== selectedQuery.title || sqlCode !== selectedQuery.sql_code)
+        ? (title !== selectedQuery.title || sqlCode !== selectedQuery.sql_code || relatedLink !== (selectedQuery.related_link || ''))
         : false;
 
     // Sync to store
@@ -59,6 +61,7 @@ export function MainContent() {
                 setSelectedQuery(target);
                 setSqlCode(target.sql_code);
                 setTitle(target.title);
+                setRelatedLink(target.related_link || '');
 
                 // Clear target to prevent re-selection loops
                 setTargetQueryId(null);
@@ -72,6 +75,7 @@ export function MainContent() {
             setSelectedQuery(null);
             setSqlCode('');
             setTitle('');
+            setRelatedLink('');
 
             // Fetch and auto-select
             fetchQueries().then(data => {
@@ -81,6 +85,7 @@ export function MainContent() {
                     setSelectedQuery(firstQuery);
                     setSqlCode(firstQuery.sql_code);
                     setTitle(firstQuery.title);
+                    setRelatedLink(firstQuery.related_link || '');
                 }
             });
         }
@@ -90,6 +95,8 @@ export function MainContent() {
         setSelectedQuery(query);
         setSqlCode(query.sql_code);
         setTitle(query.title);
+        setRelatedLink(query.related_link || '');
+        setIsLinkEditing(false);
     };
 
     // Handle Update (Inline)
@@ -102,7 +109,7 @@ export function MainContent() {
 
         setIsSaving(true);
         try {
-            const updated = await api.updateQuery(selectedQuery.id, title, sqlCode);
+            const updated = await api.updateQuery(selectedQuery.id, title, sqlCode, relatedLink);
             setQueries(queries.map(q => q.id === updated.id ? updated : q));
             setSelectedQuery(updated);
             showToast('Query saved successfully!', 'success');
@@ -115,10 +122,10 @@ export function MainContent() {
     };
 
     // Handle Create (Modal)
-    const handleCreate = async (newTitle: string, newSql: string) => {
+    const handleCreate = async (newTitle: string, newSql: string, newLink?: string) => {
         if (!table) return;
         try {
-            const newQuery = await api.createQuery(table.id, newTitle, newSql, queries.length);
+            const newQuery = await api.createQuery(table.id, newTitle, newSql, queries.length, newLink);
             setQueries([...queries, newQuery]);
             handleSelectQuery(newQuery); // Auto-select the new query
         } catch (error) {
@@ -135,6 +142,7 @@ export function MainContent() {
                 setSelectedQuery(null);
                 setSqlCode('');
                 setTitle('');
+                setRelatedLink('');
             }
         } catch (error) {
             console.error('Failed to delete query:', error);
@@ -253,6 +261,59 @@ export function MainContent() {
                                 <div className="flex-1 overflow-hidden p-0 relative">
                                     <SqlEditor code={sqlCode} onChange={selectedQuery ? setSqlCode : () => { }} />
                                 </div>
+
+                                {/* Link Input (Below Editor) */}
+                                {/* Link Input (Below Editor) */}
+                                {selectedQuery && (
+                                    <div className="h-12 border-t border-slate-800 bg-[#252526] flex items-center px-4 gap-4 flex-shrink-0">
+                                        <div className="flex items-center gap-2 text-slate-500">
+                                            <LinkIcon className="w-4 h-4" />
+                                            <span className="text-xs font-semibold uppercase tracking-wider">Link</span>
+                                        </div>
+
+                                        {!isLinkEditing && relatedLink ? (
+                                            <div className="flex-1 flex items-center gap-2 min-w-0 group">
+                                                <a
+                                                    href={relatedLink}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-mono"
+                                                >
+                                                    {relatedLink}
+                                                </a>
+                                                <button
+                                                    onClick={() => setIsLinkEditing(true)}
+                                                    className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                    title="Edit Link"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex-1 flex items-center gap-2">
+                                                <input
+                                                    value={relatedLink}
+                                                    onChange={(e) => setRelatedLink(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') setIsLinkEditing(false);
+                                                    }}
+                                                    className="flex-1 bg-[#1e1e1e] border border-slate-700/50 rounded px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 font-mono transition-colors"
+                                                    placeholder="https://..."
+                                                    autoFocus={isLinkEditing}
+                                                />
+                                                {relatedLink && (
+                                                    <button
+                                                        onClick={() => setIsLinkEditing(false)}
+                                                        className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors"
+                                                        title="Done"
+                                                    >
+                                                        <Check className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Right: Examples (Mobile: Bottom, Desktop: Right 30%) */}
@@ -281,7 +342,8 @@ export function MainContent() {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
 
             <QueryCreationModal
                 isOpen={isModalOpen}
@@ -290,22 +352,24 @@ export function MainContent() {
             />
 
             {/* Global Toast */}
-            {toast.message && (
-                <div
-                    className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-5 py-3 
+            {
+                toast.message && (
+                    <div
+                        className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-5 py-3 
                         bg-[#1e1e2e] border border-slate-700/50 shadow-2xl rounded-r-md rounded-l-sm
                         transition-opacity duration-500 ease-in-out
                         ${toast.isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}
                         ${toast.type === 'error' ? 'border-l-[3px] border-l-rose-500' :
-                            toast.type === 'success' ? 'border-l-[3px] border-l-emerald-500' :
-                                'border-l-[3px] border-l-cyan-500'}
+                                toast.type === 'success' ? 'border-l-[3px] border-l-emerald-500' :
+                                    'border-l-[3px] border-l-cyan-500'}
                     `}
-                >
-                    {toast.type === 'success' && <div className="text-emerald-500"><Save className="w-4 h-4" /></div>}
-                    {toast.type === 'error' && <div className="w-4 h-4 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 font-bold text-xs">!</div>}
-                    <span className="font-medium text-sm text-slate-200 tracking-wide">{toast.message}</span>
-                </div>
-            )}
-        </div>
+                    >
+                        {toast.type === 'success' && <div className="text-emerald-500"><Save className="w-4 h-4" /></div>}
+                        {toast.type === 'error' && <div className="w-4 h-4 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 font-bold text-xs">!</div>}
+                        <span className="font-medium text-sm text-slate-200 tracking-wide">{toast.message}</span>
+                    </div>
+                )
+            }
+        </div >
     );
 }

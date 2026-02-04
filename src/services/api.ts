@@ -184,30 +184,36 @@ export const api = {
     },
 
     // Create a new query
-    createQuery: async (tableId: string, title: string, sqlCode: string, orderIndex: number = 0): Promise<DbQuery> => {
+    // Create a new query
+    createQuery: async (tableId: string, title: string, sqlCode: string, orderIndex: number = 0, relatedLink?: string): Promise<DbQuery> => {
+        const payload = {
+            table_id: tableId,
+            title,
+            sql_code: sqlCode,
+            order_index: orderIndex,
+            related_link: relatedLink
+        };
+
         const { data, error } = await supabase
             .from('queries')
-            .insert([{ table_id: tableId, title, sql_code: sqlCode, order_index: orderIndex }])
+            .insert([payload])
             .select()
             .single();
 
-        if (!error) return data;
-
-        const { data: fallbackData, error: fallbackError } = await supabase
-            .from('queries')
-            .insert([{ table_id: tableId, title, sql_code: sqlCode }])
-            .select()
-            .single();
-
-        if (fallbackError) throw fallbackError;
-        return fallbackData;
+        if (error) throw error;
+        return data;
     },
 
     // Update a query
-    updateQuery: async (id: string, title: string, sqlCode: string): Promise<DbQuery> => {
+    // Update a query
+    updateQuery: async (id: string, title: string, sqlCode: string, relatedLink?: string): Promise<DbQuery> => {
         const { data, error } = await supabase
             .from('queries')
-            .update({ title, sql_code: sqlCode })
+            .update({
+                title,
+                sql_code: sqlCode,
+                related_link: relatedLink
+            })
             .eq('id', id)
             .select()
             .single();

@@ -7,13 +7,14 @@ import type { DbQuery } from '../types/db';
 interface QueryCreationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (title: string, sqlCode: string) => Promise<void>;
+    onSave: (title: string, sqlCode: string, relatedLink?: string) => Promise<void>;
     initialQuery?: DbQuery | null;
 }
 
 export function QueryCreationModal({ isOpen, onClose, onSave, initialQuery }: QueryCreationModalProps) {
     const [title, setTitle] = useState('');
     const [sqlCode, setSqlCode] = useState('');
+    const [relatedLink, setRelatedLink] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -21,9 +22,11 @@ export function QueryCreationModal({ isOpen, onClose, onSave, initialQuery }: Qu
             if (initialQuery) {
                 setTitle(initialQuery.title);
                 setSqlCode(initialQuery.sql_code);
+                setRelatedLink(initialQuery.related_link || '');
             } else {
                 setTitle('');
                 setSqlCode('');
+                setRelatedLink('');
             }
         }
     }, [isOpen, initialQuery]);
@@ -39,7 +42,7 @@ export function QueryCreationModal({ isOpen, onClose, onSave, initialQuery }: Qu
 
         setIsSaving(true);
         try {
-            await onSave(title, sqlCode);
+            await onSave(title, sqlCode, relatedLink);
             onClose();
         } catch (error) {
             console.error(error);
@@ -100,6 +103,19 @@ export function QueryCreationModal({ isOpen, onClose, onSave, initialQuery }: Qu
                                 if (error) setError('');
                             }} />
                         </div>
+                    </div>
+
+                    {/* Related Link Input */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+                            Related Link
+                        </label>
+                        <input
+                            value={relatedLink}
+                            onChange={(e) => setRelatedLink(e.target.value)}
+                            placeholder="https://..."
+                            className="w-full bg-[#13141f] border border-slate-700 rounded-md px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-cyan-500/50 transition-all font-mono"
+                        />
                     </div>
 
                     {/* Error Message */}

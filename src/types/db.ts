@@ -25,6 +25,7 @@ export interface DbQuery {
     order_index: number;
     created_at: string;
     deleted_at?: string | null;
+    related_link?: string | null;
 }
 
 // Joined type for UI convenience
