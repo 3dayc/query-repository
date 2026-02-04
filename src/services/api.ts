@@ -133,6 +133,7 @@ export const api = {
 
     // Fetch queries for a specific table
     getQueries: async (tableId: string): Promise<DbQuery[]> => {
+        // 1. Try with order_index first
         const { data, error } = await supabase
             .from('queries')
             .select('*')
@@ -140,20 +141,43 @@ export const api = {
             .order('order_index', { ascending: true })
             .order('created_at', { ascending: true });
 
-        if (error) throw error;
-        return data || [];
+        if (!error) return data || [];
+
+        // 2. Fallback: If error (likely column missing), try only created_at
+        console.warn('Failed to sort by order_index, executing fallback sort by created_at:', error.message);
+
+        const { data: fallbackData, error: fallbackError } = await supabase
+            .from('queries')
+            .select('*')
+            .eq('table_id', tableId)
+            .order('created_at', { ascending: true });
+
+        if (fallbackError) throw fallbackError;
+        return fallbackData || [];
     },
 
     // Create a new query
     createQuery: async (tableId: string, title: string, sqlCode: string, orderIndex: number = 0): Promise<DbQuery> => {
+        // 1. Try with order_index
         const { data, error } = await supabase
             .from('queries')
             .insert([{ table_id: tableId, title, sql_code: sqlCode, order_index: orderIndex }])
             .select()
             .single();
 
-        if (error) throw error;
-        return data;
+        if (!error) return data;
+
+        // 2. Fallback: Try without order_index
+        console.warn('Failed to insert with order_index, executing fallback insert:', error.message);
+
+        const { data: fallbackData, error: fallbackError } = await supabase
+            .from('queries')
+            .insert([{ table_id: tableId, title, sql_code: sqlCode }])
+            .select()
+            .single();
+
+        if (fallbackError) throw fallbackError;
+        return fallbackData;
     },
 
     // Update a query
@@ -186,7 +210,10 @@ export const api = {
             .update({ order_index: newIndex })
             .eq('id', id);
 
-        if (error) throw error;
+        // Graceful failure: If column is missing, just log/ignore but don't crash UI
+        if (error) {
+            console.warn('Failed to update query order (order_index column might be missing):', error.message);
+        }
     },
     // Search Queries
     searchQueries: async (query: string): Promise<any[]> => {
