@@ -174,6 +174,7 @@ function SortableFileItem({ table, onEdit }: SortableFileProps) {
     const setSelectedTableId = useAppStore(state => state.setSelectedTableId);
     const removeTable = useAppStore(state => state.removeTable);
     const fetchData = useAppStore(state => state.fetchData); // Fallback
+    const setMobileMenuOpen = useAppStore(state => state.setMobileMenuOpen);
 
     const openConfirm = useAppStore(state => state.openConfirm);
 
@@ -200,7 +201,10 @@ function SortableFileItem({ table, onEdit }: SortableFileProps) {
         <div
             ref={setNodeRef}
             style={style}
-            onClick={() => setSelectedTableId(table.id)}
+            onClick={() => {
+                setSelectedTableId(table.id);
+                setMobileMenuOpen(false);
+            }}
             className={clsx(
                 "group relative flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all select-none",
                 isSelected
@@ -615,7 +619,7 @@ export function Sidebar() {
                         <SortableContext items={folders.map(f => f.id)} strategy={verticalListSortingStrategy}>
                             <div className="space-y-1">
                                 {folders.map(folder => (
-                                    <div key={folder.id} onClick={() => isMobileMenuOpen && setMobileMenuOpen(false)}>
+                                    <div key={folder.id}>
                                         <SortableFolderItem
                                             folder={folder}
                                             tables={tables.filter(t => t.folder_id === folder.id).sort((a, b) => a.order_index - b.order_index)}
@@ -635,7 +639,7 @@ export function Sidebar() {
                                 <SortableContext items={unorganizedTables.map(t => t.id)} strategy={verticalListSortingStrategy}>
                                     <div className="space-y-0.5">
                                         {unorganizedTables.map(table => (
-                                            <div key={table.id} onClick={() => isMobileMenuOpen && setMobileMenuOpen(false)}>
+                                            <div key={table.id}>
                                                 <SortableFileItem
                                                     table={table}
                                                     onEdit={() => setEditingTable(table)}
