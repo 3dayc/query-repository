@@ -33,7 +33,7 @@ export function TableEditModal({ isOpen, onClose, initialName, initialDescriptio
             onClose();
         } catch (error) {
             console.error('Failed to save table:', error);
-            openAlert('Error', 'Failed to save changes.');
+            openAlert('Error', 'Failed to save.');
         } finally {
             setIsSaving(false);
         }
@@ -100,7 +100,7 @@ export function TableEditModal({ isOpen, onClose, initialName, initialDescriptio
                             className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-cyan-600 hover:bg-cyan-500 rounded-md shadow-lg shadow-cyan-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Save className="w-4 h-4" />
-                            {isSaving ? 'Saving...' : 'Save Changes'}
+                            {isSaving ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </form>

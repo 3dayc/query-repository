@@ -223,7 +223,7 @@ export function MainContent() {
                                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50 whitespace-nowrap"
                                             >
                                                 <Save className="w-3.5 h-3.5" />
-                                                <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save Changes'}</span>
+                                                <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save'}</span>
                                                 <span className="sm:hidden">Save</span>
                                             </button>
                                         </div>
