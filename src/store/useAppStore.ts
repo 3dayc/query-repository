@@ -96,7 +96,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
     },
 
-    setSelectedTableId: (id) => set({ selectedTableId: id }),
+    setSelectedTableId: (id) => set({ selectedTableId: id, targetQueryId: null }),
 
     toggleFolder: (folderId) => set((state) => {
         const isExpanded = state.expandedFolderIds.includes(folderId);

@@ -5,6 +5,8 @@ import { useAppStore } from './store/useAppStore';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { TrashBin } from './components/TrashBin';
 
+import { UrlSyncController } from './components/UrlSyncController';
+
 function App() {
   const { fetchData, isLoading, viewMode } = useAppStore();
 
@@ -22,6 +24,7 @@ function App() {
 
   return (
     <div className="flex h-screen w-screen bg-[#0f1016] text-slate-200 overflow-hidden font-sans">
+      <UrlSyncController />
       <Sidebar />
       {viewMode === 'trash' ? <TrashBin /> : <MainContent />}
       <ConfirmDialog />

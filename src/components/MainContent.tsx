@@ -52,22 +52,24 @@ export function MainContent() {
     }, [table]);
 
     // Smart Navigation Effect
+    // Smart Navigation Effect
     useEffect(() => {
         // If we have a targetQueryId and queries are loaded, select it
         if (targetQueryId && queries.length > 0) {
-            const target = queries.find(q => q.id === targetQueryId);
-            if (target) {
-                // Select Query
-                setSelectedQuery(target);
-                setSqlCode(target.sql_code);
-                setTitle(target.title);
-                setRelatedLink(target.related_link || '');
-
-                // Clear target to prevent re-selection loops
-                setTargetQueryId(null);
+            // Only update if mismatch (prevent loops)
+            if (selectedQuery?.id !== targetQueryId) {
+                const target = queries.find(q => q.id === targetQueryId);
+                if (target) {
+                    // Select Query
+                    setSelectedQuery(target);
+                    setSqlCode(target.sql_code);
+                    setTitle(target.title);
+                    setRelatedLink(target.related_link || '');
+                    setIsLinkEditing(false); // Reset edit mode
+                }
             }
         }
-    }, [targetQueryId, queries, setTargetQueryId]);
+    }, [targetQueryId, queries, selectedQuery?.id]);
 
     useEffect(() => {
         if (table) {
@@ -80,23 +82,31 @@ export function MainContent() {
             // Fetch and auto-select
             fetchQueries().then(data => {
                 // Only auto-select first query if NOT navigating to a specific target
-                if (!useAppStore.getState().targetQueryId && data && data.length > 0) {
+                // Check store state directly to avoid closure staleness, although fetchQueries is usually fast
+                const currentTarget = useAppStore.getState().targetQueryId;
+
+                if (!currentTarget && data && data.length > 0) {
                     const firstQuery = data[0];
                     setSelectedQuery(firstQuery);
                     setSqlCode(firstQuery.sql_code);
                     setTitle(firstQuery.title);
                     setRelatedLink(firstQuery.related_link || '');
+                    // Sync up
+                    setTargetQueryId(firstQuery.id);
                 }
             });
         }
-    }, [table, fetchQueries]);
+    }, [table, fetchQueries, setTargetQueryId]);
 
     const handleSelectQuery = (query: DbQuery) => {
+        if (selectedQuery?.id === query.id) return;
+
         setSelectedQuery(query);
         setSqlCode(query.sql_code);
         setTitle(query.title);
         setRelatedLink(query.related_link || '');
         setIsLinkEditing(false);
+        setTargetQueryId(query.id); // Sync to global state
     };
 
     // Handle Update (Inline)
