@@ -31,6 +31,7 @@ export interface TableWithQueries extends DbTable {
 export interface SearchResult extends DbQuery {
     tables: {
         table_name: string;
+        description?: string | null;
         folder_id: string | null;
     } | null; // Supabase returns object for single relation or array for multiple? Usually object if 1:1 or N:1
 }

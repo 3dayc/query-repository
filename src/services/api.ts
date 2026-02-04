@@ -219,17 +219,30 @@ export const api = {
     searchQueries: async (query: string): Promise<any[]> => {
         if (!query.trim()) return [];
 
+        // 1. Find tables matching the description or name
+        const { data: matchingTables, error: tableError } = await supabase
+            .from('tables')
+            .select('id')
+            .or(`description.ilike.%${query}%,table_name.ilike.%${query}%`);
+
+        if (tableError) throw tableError;
+
+        const tableIds = matchingTables?.map(t => t.id) || [];
+        const tableIdFilter = tableIds.length > 0 ? `,table_id.in.(${tableIds.join(',')})` : '';
+
+        // 2. Search queries matching title/sql OR belonging to matching tables
         const { data, error } = await supabase
             .from('queries')
             .select(`
                 *,
                 tables (
                     table_name,
+                    description,
                     folder_id
                 )
             `)
-            .or(`title.ilike.%${query}%,sql_code.ilike.%${query}%`)
-            .limit(10); // Limit results for performance
+            .or(`title.ilike.%${query}%,sql_code.ilike.%${query}%${tableIdFilter}`)
+            .limit(20);
 
         if (error) throw error;
         return data || [];

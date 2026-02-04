@@ -152,6 +152,11 @@ export function SearchBar() {
                                                 {result.tables?.table_name}
                                             </span>
                                         </div>
+                                        {result.tables?.description && (
+                                            <div className="text-xs text-slate-500 mb-2 px-1 border-l-2 border-slate-700 pl-2">
+                                                {highlightText(result.tables.description, query)}
+                                            </div>
+                                        )}
                                         <p className="text-sm text-slate-500 line-clamp-3 font-mono">
                                             {highlightText(result.sql_code, query)}
                                         </p>
@@ -194,6 +199,11 @@ export function SearchBar() {
                                                 {result.tables?.table_name || 'Unknown Table'}
                                             </span>
                                         </div>
+                                        {result.tables?.description && (
+                                            <div className="text-[10px] text-slate-500 mb-1.5 truncate border-l-2 border-slate-700 pl-1.5 ml-0.5">
+                                                {highlightText(result.tables.description, query)}
+                                            </div>
+                                        )}
                                         <p className="text-xs text-slate-500 line-clamp-2 font-mono bg-slate-900/50 p-1.5 rounded border border-slate-800/50">
                                             {highlightText(result.sql_code, query)}
                                         </p>
