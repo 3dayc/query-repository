@@ -12,12 +12,21 @@ export function UrlSyncController() {
 
     const [isSynced, setIsSynced] = useState(false);
     const ignoreNextParamsRef = useRef<string | null>(null);
+    const prevParamsRef = useRef(searchParams.toString());
 
     // 1. Sync URL -> Store
     useEffect(() => {
         if (isLoading || !isReady) return;
 
         const currentParamsStr = searchParams.toString();
+
+        // Only run if URL actually changed (prevent reverting Store updates)
+        // Exception: Initial sync must run
+        if (isSynced && currentParamsStr === prevParamsRef.current) {
+            return;
+        }
+        prevParamsRef.current = currentParamsStr;
+
         if (ignoreNextParamsRef.current === currentParamsStr) {
             return;
         }
