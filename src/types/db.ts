@@ -8,6 +8,7 @@ export interface DbFolder {
 export interface DbTable {
     id: string;
     table_name: string;
+    schema_name?: string | null;
     description: string | null;
     folder_id: string | null;
     order_index: number;

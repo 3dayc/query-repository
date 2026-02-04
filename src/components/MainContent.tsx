@@ -2,14 +2,18 @@ import { useEffect, useState, useCallback } from 'react';
 import type { DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
-import { Database, Save, FilePlus, Pencil, Menu } from 'lucide-react';
+import { Database, Save, FilePlus, Menu } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
 import { SearchBar } from './SearchBar';
 
 export function MainContent() {
-    const { selectedTableId, tables, openAlert, targetQueryId, setTargetQueryId, toggleMobileMenu } = useAppStore();
+    const {
+        selectedTableId, tables, openAlert, targetQueryId,
+        setTargetQueryId, toggleMobileMenu, showToast, toast,
+        setHasUnsavedChanges, checkUnsavedChanges
+    } = useAppStore();
     const table = tables.find(t => t.id === selectedTableId);
 
     const [queries, setQueries] = useState<DbQuery[]>([]);
@@ -19,6 +23,16 @@ export function MainContent() {
     const [sqlCode, setSqlCode] = useState('');
     const [title, setTitle] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Derived State for Unsaved Changes
+    const isModified = selectedQuery
+        ? (title !== selectedQuery.title || sqlCode !== selectedQuery.sql_code)
+        : false;
+
+    // Sync to store
+    useEffect(() => {
+        setHasUnsavedChanges(isModified);
+    }, [isModified, setHasUnsavedChanges]);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,10 +105,10 @@ export function MainContent() {
             const updated = await api.updateQuery(selectedQuery.id, title, sqlCode);
             setQueries(queries.map(q => q.id === updated.id ? updated : q));
             setSelectedQuery(updated);
-            openAlert('Success', 'Query saved successfully!');
+            showToast('Query saved successfully!', 'success');
         } catch (error) {
             console.error('Failed to save query:', error);
-            openAlert('Error', 'Failed to save query.');
+            showToast('Failed to save query.', 'error');
         } finally {
             setIsSaving(false);
         }
@@ -176,6 +190,11 @@ export function MainContent() {
                                 <Database className="w-5 h-5 text-cyan-400" />
                             </div>
                             <div>
+                                {table.schema_name && (
+                                    <div className="text-[10px] font-mono text-slate-500 mb-0.5 tracking-wide">
+                                        {table.schema_name}
+                                    </div>
+                                )}
                                 <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
                                     {table.table_name}
                                     <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -206,9 +225,6 @@ export function MainContent() {
                                 {selectedQuery ? (
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#252526]">
                                         <div className="flex items-center gap-2 w-1/2 group">
-                                            <div className="p-1.5 rounded-full bg-slate-800 text-slate-400 group-hover:text-cyan-400 transition-colors">
-                                                <Pencil className="w-4 h-4" />
-                                            </div>
                                             <input
                                                 value={title}
                                                 onChange={(e) => setTitle(e.target.value)}
@@ -219,11 +235,11 @@ export function MainContent() {
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={handleUpdate}
-                                                disabled={isSaving}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50 whitespace-nowrap"
+                                                disabled={isSaving || !isModified}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500 whitespace-nowrap"
                                             >
                                                 <Save className="w-3.5 h-3.5" />
-                                                <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save'}</span>
+                                                <span className="hidden sm:inline">Save</span>
                                                 <span className="sm:hidden">Save</span>
                                             </button>
                                         </div>
@@ -244,7 +260,7 @@ export function MainContent() {
                                 <ExampleList
                                     queries={queries}
                                     selectedQueryId={selectedQuery?.id || null}
-                                    onSelect={handleSelectQuery}
+                                    onSelect={(q) => checkUnsavedChanges(() => handleSelectQuery(q))}
                                     onDelete={handleDeleteQuery}
 
                                     onReorder={async (newQueries) => {
@@ -272,6 +288,24 @@ export function MainContent() {
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleCreate}
             />
+
+            {/* Global Toast */}
+            {toast.message && (
+                <div
+                    className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-5 py-3 
+                        bg-[#1e1e2e] border border-slate-700/50 shadow-2xl rounded-r-md rounded-l-sm
+                        transition-opacity duration-500 ease-in-out
+                        ${toast.isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+                        ${toast.type === 'error' ? 'border-l-[3px] border-l-rose-500' :
+                            toast.type === 'success' ? 'border-l-[3px] border-l-emerald-500' :
+                                'border-l-[3px] border-l-cyan-500'}
+                    `}
+                >
+                    {toast.type === 'success' && <div className="text-emerald-500"><Save className="w-4 h-4" /></div>}
+                    {toast.type === 'error' && <div className="w-4 h-4 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 font-bold text-xs">!</div>}
+                    <span className="font-medium text-sm text-slate-200 tracking-wide">{toast.message}</span>
+                </div>
+            )}
         </div>
     );
 }

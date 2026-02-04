@@ -7,21 +7,24 @@ interface TableEditModalProps {
     onClose: () => void;
     initialName: string;
     initialDescription: string;
-    onSave: (name: string, description: string) => Promise<void>;
+    initialSchema?: string;
+    onSave: (name: string, description: string, schema: string) => Promise<void>;
 }
 
-export function TableEditModal({ isOpen, onClose, initialName, initialDescription, onSave }: TableEditModalProps) {
+export function TableEditModal({ isOpen, onClose, initialName, initialDescription, initialSchema, onSave }: TableEditModalProps) {
     const { openAlert } = useAppStore();
     const [name, setName] = useState(initialName);
     const [description, setDescription] = useState(initialDescription);
+    const [schema, setSchema] = useState(initialSchema || '');
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             setName(initialName);
             setDescription(initialDescription || '');
+            setSchema(initialSchema || '');
         }
-    }, [isOpen, initialName, initialDescription]);
+    }, [isOpen, initialName, initialDescription, initialSchema]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,7 +32,7 @@ export function TableEditModal({ isOpen, onClose, initialName, initialDescriptio
 
         setIsSaving(true);
         try {
-            await onSave(name, description);
+            await onSave(name, description, schema);
             onClose();
         } catch (error) {
             console.error('Failed to save table:', error);
@@ -60,7 +63,19 @@ export function TableEditModal({ isOpen, onClose, initialName, initialDescriptio
                 {/* Body */}
                 <form onSubmit={handleSave} className="flex-1 flex flex-col p-6 gap-4">
                     <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wide">
+                            Schema
+                        </label>
+                        <input
+                            value={schema}
+                            onChange={(e) => setSchema(e.target.value)}
+                            placeholder="public"
+                            className="w-full bg-[#13141f] border border-slate-700 rounded-md px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wide">
                             Table Name
                         </label>
                         <input
@@ -73,14 +88,14 @@ export function TableEditModal({ isOpen, onClose, initialName, initialDescriptio
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wide">
                             Description
                         </label>
                         <textarea
                             rows={3}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Optional description..."
+                            placeholder="Optional"
                             className="w-full bg-[#13141f] border border-slate-700 rounded-md px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 resize-none"
                         />
                     </div>

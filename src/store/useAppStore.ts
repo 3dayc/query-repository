@@ -54,9 +54,22 @@ interface AppState {
     // I will stick to MainContent state for queries to avoid massive refactor, but using API directly.
     // Wait, requirement 5 says "Use React State to partially update UI".
     // I can just pass Reorder function to ExampleList.
+    // Toast State
+    toast: {
+        message: string | null;
+        isVisible: boolean;
+        type: 'success' | 'error' | 'info';
+    };
+    showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+    hideToast: () => void;
+
+    // Unsaved Changes State
+    hasUnsavedChanges: boolean;
+    setHasUnsavedChanges: (has: boolean) => void;
+    checkUnsavedChanges: (action: () => void) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
     folders: [],
     tables: [],
     selectedTableId: null,
@@ -135,4 +148,37 @@ export const useAppStore = create<AppState>((set) => ({
     closeModal: () => set((state) => ({
         modal: { ...state.modal, isOpen: false }
     })),
+
+    // Toast Actions
+    toast: {
+        message: null,
+        isVisible: false,
+        type: 'info',
+    },
+    showToast: (message, type = 'info') => {
+        set({ toast: { message, isVisible: true, type } });
+        setTimeout(() => {
+            set((state) => ({ toast: { ...state.toast, isVisible: false } }));
+        }, 3000);
+    },
+    hideToast: () => set((state) => ({ toast: { ...state.toast, isVisible: false } })),
+
+    // Unsaved Changes State
+    hasUnsavedChanges: false,
+    setHasUnsavedChanges: (has: boolean) => set({ hasUnsavedChanges: has }),
+    checkUnsavedChanges: (action: () => void) => {
+        const state = get();
+        if (state.hasUnsavedChanges) {
+            state.openConfirm(
+                'Unsaved Changes',
+                'You have unsaved changes. Do you want to discard them and continue?',
+                () => {
+                    set({ hasUnsavedChanges: false });
+                    action();
+                }
+            );
+        } else {
+            action();
+        }
+    },
 }));

@@ -189,6 +189,7 @@ function SortableFileItem({ table, onEdit }: SortableFileProps) {
     const setMobileMenuOpen = useAppStore(state => state.setMobileMenuOpen);
 
     const openConfirm = useAppStore(state => state.openConfirm);
+    const checkUnsavedChanges = useAppStore(state => state.checkUnsavedChanges);
 
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -214,8 +215,10 @@ function SortableFileItem({ table, onEdit }: SortableFileProps) {
             ref={setNodeRef}
             style={style}
             onClick={() => {
-                setSelectedTableId(table.id);
-                setMobileMenuOpen(false);
+                checkUnsavedChanges(() => {
+                    setSelectedTableId(table.id);
+                    setMobileMenuOpen(false);
+                });
             }}
             className={clsx(
                 "group relative flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all select-none",
@@ -280,7 +283,8 @@ export function Sidebar() {
         updateTable,
         setSelectedTableId,
         setTables,
-        collapseAllFolders
+        collapseAllFolders,
+        checkUnsavedChanges
     } = useAppStore();
 
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -290,6 +294,7 @@ export function Sidebar() {
     // New Table State
     const [isCreatingTable, setIsCreatingTable] = useState(false);
     const [newTableName, setNewTableName] = useState('');
+    const [newTableSchema, setNewTableSchema] = useState(''); // Added Schema state
     const [newTableDescription, setNewTableDescription] = useState('');
     const [activeFolderForNewTable, setActiveFolderForNewTable] = useState<string | null>(null);
 
@@ -416,32 +421,15 @@ export function Sidebar() {
         e.preventDefault();
         if (!newFolderName.trim()) return;
 
-        const tempId = `temp-${Date.now()}`;
-        const optimisticFolder: DbFolder = {
-            id: tempId,
-            name: newFolderName,
-            order_index: folders.length,
-            created_at: new Date().toISOString()
-        };
-
-        addFolder(optimisticFolder);
+        const nameToSave = newFolderName;
         setNewFolderName('');
         setIsCreatingFolder(false);
 
         try {
-            await api.createFolder(newFolderName, folders.length);
-            // Replace optimstic folder with real one? 
-            // Zustand store replace pattern is tricky without ID. 
-            // For now, silent fetch is safer to get real ID for future ops.
-            // But user asked for NO RELOAD. 
-            // Ideally we swap the ID in the store. 
-            // Let's do a silent fetch in background to sync IDs.
-            fetchData();
+            const newFolder = await api.createFolder(nameToSave, folders.length);
+            addFolder(newFolder);
         } catch (error) {
             console.error(error);
-            // Error handling
-            // removeFolder(tempId); // If we had removeFolder
-            fetchData();
         }
     };
 
@@ -449,40 +437,34 @@ export function Sidebar() {
         e.preventDefault();
         if (!newTableName.trim()) return;
 
-        const tempId = `temp-${Date.now()}`;
-        const optimisticTable: DbTable = {
-            id: tempId,
-            table_name: newTableName,
-            description: newTableDescription,
-            folder_id: activeFolderForNewTable,
-            order_index: 0,
-            created_at: new Date().toISOString()
-        };
+        const nameToSave = newTableName;
+        const descToSave = newTableDescription;
+        const schemaToSave = newTableSchema.trim() || 'public';
+        const targetFolderId = activeFolderForNewTable;
 
-        addTable(optimisticTable);
         setNewTableName('');
+        setNewTableSchema('');
         setNewTableDescription('');
         setIsCreatingTable(false);
         setActiveFolderForNewTable(null);
 
         try {
-            await api.createTable(newTableName, newTableDescription, activeFolderForNewTable);
-            fetchData(); // Sync IDs
+            const newTable = await api.createTable(nameToSave, descToSave, targetFolderId, 0, schemaToSave);
+            addTable(newTable);
         } catch (error) {
             console.error(error);
-            fetchData();
         }
     };
 
-    const handleSaveEdit = async (name: string, description: string) => {
+    const handleSaveEdit = async (name: string, description: string, schema: string) => {
         if (!editingTable) return;
 
         // Optimistic
-        const updated = { ...editingTable, table_name: name, description };
+        const updated = { ...editingTable, table_name: name, description, schema_name: schema };
         updateTable(updated);
 
         try {
-            await api.updateTable(editingTable.id, name, description);
+            await api.updateTable(editingTable.id, name, description, schema);
             // No fetch needed technically if successful
         } catch (error) {
             console.error(error);
@@ -557,9 +539,11 @@ export function Sidebar() {
                     <div
                         className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => {
-                            setSelectedTableId(null);
-                            collapseAllFolders();
-                            setMobileMenuOpen(false); // Close on selection
+                            checkUnsavedChanges(() => {
+                                setSelectedTableId(null);
+                                collapseAllFolders();
+                                setMobileMenuOpen(false);
+                            });
                         }}
                     >
                         <Database className="text-cyan-500 w-5 h-5 shadow-glow-cyan" />
@@ -611,6 +595,12 @@ export function Sidebar() {
                                 New File in: <span className="text-slate-300">{activeFolderForNewTable ? folders.find(f => f.id === activeFolderForNewTable)?.name : 'Root'}</span>
                             </div>
                             <input
+                                placeholder="Schema"
+                                value={newTableSchema}
+                                onChange={e => setNewTableSchema(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 mb-2"
+                            />
+                            <input
                                 autoFocus
                                 placeholder="Table Name"
                                 value={newTableName}
@@ -656,7 +646,7 @@ export function Sidebar() {
                         {/* Uncategorized / Root Files */}
                         {unorganizedTables.length > 0 && (
                             <div className="mt-4 pt-4 border-t border-slate-800">
-                                <h3 className="px-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Uncategorized</h3>
+                                <h3 className="px-2 text-[10px] font-bold text-slate-600 tracking-wide mb-2">Uncategorized</h3>
                                 <SortableContext items={unorganizedTables.map(t => t.id)} strategy={verticalListSortingStrategy}>
                                     <div className="space-y-0.5">
                                         {unorganizedTables.map(table => (
@@ -693,6 +683,7 @@ export function Sidebar() {
                     onClose={() => setEditingTable(null)}
                     initialName={editingTable?.table_name || ''}
                     initialDescription={editingTable?.description || ''}
+                    initialSchema={editingTable?.schema_name || ''}
                     onSave={handleSaveEdit}
                 />
 

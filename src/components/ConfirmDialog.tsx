@@ -12,8 +12,10 @@ export function ConfirmDialog() {
         closeModal();
     };
 
+    const isDelete = modal.title.toLowerCase().includes('delete');
+
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-[2px] animate-in fade-in duration-200">
             <div
                 className="w-[400px] bg-[#1a1b26] rounded-xl border border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
@@ -22,7 +24,7 @@ export function ConfirmDialog() {
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-[#1e1e1e]">
                     <div className="flex items-center gap-2">
                         {modal.type === 'confirm' ? (
-                            <AlertTriangle className="w-5 h-5 text-amber-500" />
+                            <AlertTriangle className={clsx("w-5 h-5", isDelete ? "text-red-500" : "text-amber-500")} />
                         ) : (
                             <CheckCircle className="w-5 h-5 text-cyan-500" />
                         )}
@@ -52,11 +54,11 @@ export function ConfirmDialog() {
                         className={clsx(
                             "px-4 py-2 text-sm font-bold text-white rounded-md shadow-lg transition-all",
                             modal.type === 'confirm'
-                                ? "bg-red-600 hover:bg-red-500 shadow-red-900/20"
+                                ? (isDelete ? "bg-red-600 hover:bg-red-500 shadow-red-900/20" : "bg-cyan-600 hover:bg-cyan-500 shadow-cyan-900/20")
                                 : "bg-cyan-600 hover:bg-cyan-500 shadow-cyan-900/20"
                         )}
                     >
-                        {modal.type === 'confirm' ? 'Delete' : 'OK'}
+                        {modal.type === 'confirm' ? (isDelete ? 'Delete' : 'Continue') : 'OK'}
                     </button>
                 </div>
             </div>

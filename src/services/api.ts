@@ -80,14 +80,15 @@ export const api = {
     },
 
     // Create a new table
-    createTable: async (tableName: string, description: string, folderId: string | null, orderIndex: number = 0): Promise<DbTable> => {
+    createTable: async (tableName: string, description: string, folderId: string | null, orderIndex: number = 0, schemaName: string = 'public'): Promise<DbTable> => {
         const { data, error } = await supabase
             .from('tables')
             .insert([{
                 table_name: tableName,
                 description,
                 folder_id: folderId,
-                order_index: orderIndex
+                order_index: orderIndex,
+                schema_name: schemaName
             }])
             .select()
             .single();
@@ -97,10 +98,13 @@ export const api = {
     },
 
     // Update a table
-    updateTable: async (id: string, name: string, description: string): Promise<DbTable> => {
+    updateTable: async (id: string, name: string, description: string, schemaName?: string): Promise<DbTable> => {
+        const updates: any = { table_name: name, description };
+        if (schemaName !== undefined) updates.schema_name = schemaName;
+
         const { data, error } = await supabase
             .from('tables')
-            .update({ table_name: name, description })
+            .update(updates)
             .eq('id', id)
             .select()
             .single();
