@@ -263,7 +263,8 @@ export function Sidebar() {
         addTable,
         updateTable,
         setSelectedTableId,
-        setTables
+        setTables,
+        collapseAllFolders
     } = useAppStore();
 
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -508,10 +509,13 @@ export function Sidebar() {
                 onMouseDown={startResizing}
             />
             {/* Header */}
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div className="h-16 px-4 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
                 <div
                     className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => setSelectedTableId(null)}
+                    onClick={() => {
+                        setSelectedTableId(null);
+                        collapseAllFolders();
+                    }}
                 >
                     <Database className="text-cyan-500 w-5 h-5 shadow-glow-cyan" />
                     <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent tracking-tight">

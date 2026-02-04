@@ -173,6 +173,25 @@ export const api = {
             .eq('id', id);
 
         if (error) throw error;
+    },
+    // Search Queries
+    searchQueries: async (query: string): Promise<any[]> => {
+        if (!query.trim()) return [];
+
+        const { data, error } = await supabase
+            .from('queries')
+            .select(`
+                *,
+                tables (
+                    table_name,
+                    folder_id
+                )
+            `)
+            .or(`title.ilike.%${query}%,sql_code.ilike.%${query}%`)
+            .limit(10); // Limit results for performance
+
+        if (error) throw error;
+        return data || [];
     }
 };
 

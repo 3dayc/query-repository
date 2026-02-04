@@ -8,11 +8,15 @@ interface AppState {
     selectedTableId: string | null;
     isLoading: boolean;
     expandedFolderIds: string[];
+    targetQueryId: string | null; // For smart navigation
 
     // Actions
     fetchData: () => Promise<void>;
     setSelectedTableId: (id: string | null) => void;
     toggleFolder: (folderId: string) => void;
+    openFolder: (folderId: string) => void;
+    collapseAllFolders: () => void;
+    setTargetQueryId: (id: string | null) => void;
 
     // Optimistic updates (UI only, API calls should be handled by caller or thunk-like pattern)
     setFolders: (folders: DbFolder[]) => void;
@@ -53,6 +57,7 @@ export const useAppStore = create<AppState>((set) => ({
     selectedTableId: null,
     isLoading: false,
     expandedFolderIds: [],
+    targetQueryId: null,
 
     fetchData: async () => {
         set({ isLoading: true });
@@ -79,6 +84,15 @@ export const useAppStore = create<AppState>((set) => ({
                 : [...state.expandedFolderIds, folderId],
         };
     }),
+
+    openFolder: (folderId) => set((state) => {
+        if (state.expandedFolderIds.includes(folderId)) return {};
+        return { expandedFolderIds: [...state.expandedFolderIds, folderId] };
+    }),
+
+    collapseAllFolders: () => set({ expandedFolderIds: [] }),
+
+    setTargetQueryId: (id) => set({ targetQueryId: id }),
 
     setFolders: (folders) => set({ folders }),
     setTables: (tables) => set({ tables }),

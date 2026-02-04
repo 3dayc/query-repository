@@ -6,9 +6,10 @@ import { Database, Save, FilePlus, Pencil } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
+import { SearchBar } from './SearchBar';
 
 export function MainContent() {
-    const { selectedTableId, tables, openAlert } = useAppStore();
+    const { selectedTableId, tables, openAlert, targetQueryId, setTargetQueryId } = useAppStore();
     const table = tables.find(t => t.id === selectedTableId);
 
     const [queries, setQueries] = useState<DbQuery[]>([]);
@@ -34,6 +35,23 @@ export function MainContent() {
         }
     }, [table]);
 
+    // Smart Navigation Effect
+    useEffect(() => {
+        // If we have a targetQueryId and queries are loaded, select it
+        if (targetQueryId && queries.length > 0) {
+            const target = queries.find(q => q.id === targetQueryId);
+            if (target) {
+                // Select Query
+                setSelectedQuery(target);
+                setSqlCode(target.sql_code);
+                setTitle(target.title);
+
+                // Clear target to prevent re-selection loops
+                setTargetQueryId(null);
+            }
+        }
+    }, [targetQueryId, queries, setTargetQueryId]);
+
     useEffect(() => {
         if (table) {
             // Reset state first
@@ -43,7 +61,8 @@ export function MainContent() {
 
             // Fetch and auto-select
             fetchQueries().then(data => {
-                if (data && data.length > 0) {
+                // Only auto-select first query if NOT navigating to a specific target
+                if (!useAppStore.getState().targetQueryId && data && data.length > 0) {
                     const firstQuery = data[0];
                     setSelectedQuery(firstQuery);
                     setSqlCode(firstQuery.sql_code);
@@ -108,130 +127,136 @@ export function MainContent() {
         }
     };
 
-    if (!table) {
-        // ... (Empty state code remains same, omitted for brevity in replace check if it matches)
-        return (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#13141f]">
-                <div className="max-w-md space-y-6 animate-in fade-in zoom-in duration-500">
-                    <div className="inline-block p-4 rounded-full bg-slate-900/50 border border-slate-800 mb-4 animate-pulse">
-                        <span className="text-4xl">🚀</span>
-                    </div>
-                    <h1 className="text-4xl font-extrabold bg-gradient-to-br from-white to-slate-500 bg-clip-text text-transparent">
-                        항공Product SQL
-                    </h1>
-                    <p className="text-slate-400 text-lg">
-                        Select a file from the sidebar to start editing queries.
-                    </p>
-
-                    <div className="flex items-center justify-center gap-2 pt-8">
-                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                        <span className="text-sm font-medium text-slate-500 tracking-wide font-mono">
-                            Supabase Connected
-                        </span>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="flex-1 flex flex-col h-screen bg-[#13141f] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-[#1a1b26] border-b border-slate-800 flex-shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-800 rounded-lg border border-slate-700">
-                        <Database className="w-5 h-5 text-cyan-400" />
-                    </div>
-                    <div>
-                        <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                            {table.table_name}
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                                Table
-                            </span>
-                        </h2>
-                        {table.description && (
-                            <p className="text-sm text-slate-400">{table.description}</p>
-                        )}
-                    </div>
+            {/* Global Header (Search) */}
+            <div className="h-16 border-b border-slate-800 bg-[#0f1016] flex items-center px-6 justify-between flex-shrink-0 z-[60]">
+                <div className="flex-1 max-w-2xl">
+                    <SearchBar />
                 </div>
-                {/* New Query Button */}
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors shadow-lg shadow-cyan-900/20"
-                >
-                    <FilePlus className="w-3.5 h-3.5" />
-                    New Query
-                </button>
             </div>
 
-            {/* Body */}
-            <div className="flex-1 flex overflow-hidden">
-                {/* Left: Editor (70%) */}
-                <div className="flex-1 flex flex-col bg-[#1e1e1e] border-r border-black/40">
-                    {/* Editor Toolbar (Only visible if a query is selected) */}
-                    {selectedQuery ? (
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#252526]">
-                            <div className="flex items-center gap-2 w-1/2 group">
-                                <div className="p-1.5 rounded-full bg-slate-800 text-slate-400 group-hover:text-cyan-400 transition-colors">
-                                    <Pencil className="w-4 h-4" />
+            {/* Main Content Area */}
+            {!table ? (
+                // Empty State
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#13141f]">
+                    <div className="max-w-md space-y-6">
+                        <div className="inline-block p-4 rounded-full bg-slate-900/50 border border-slate-800 mb-4">
+                            <span className="text-4xl">🚀</span>
+                        </div>
+                        <h1 className="text-4xl font-extrabold bg-gradient-to-br from-white to-slate-500 bg-clip-text text-transparent">
+                            항공Product SQL
+                        </h1>
+                        <p className="text-slate-400 text-lg">
+                            Select a file from the sidebar to start editing queries.
+                        </p>
+
+                        <div className="flex items-center justify-center gap-2 pt-8">
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                            <span className="text-sm font-medium text-slate-500 tracking-wide font-mono">
+                                Supabase Connected
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    {/* Table Header */}
+                    <div className="flex items-center justify-between px-6 py-4 bg-[#1a1b26] border-b border-slate-800 flex-shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                                <Database className="w-5 h-5 text-cyan-400" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                                    {table.table_name}
+                                    <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                        Table
+                                    </span>
+                                </h2>
+                                {table.description && (
+                                    <p className="text-sm text-slate-400">{table.description}</p>
+                                )}
+                            </div>
+                        </div>
+                        {/* New Query Button */}
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors shadow-lg shadow-cyan-900/20"
+                        >
+                            <FilePlus className="w-3.5 h-3.5" />
+                            New Query
+                        </button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="flex-1 overflow-auto bg-[#1e1e1e]">
+                        <div className="flex h-full min-w-[1000px]">
+                            {/* Left: Editor (70%) */}
+                            <div className="flex-1 flex flex-col border-r border-black/40">
+                                {/* Editor Toolbar (Only visible if a query is selected) */}
+                                {selectedQuery ? (
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#252526]">
+                                        <div className="flex items-center gap-2 w-1/2 group">
+                                            <div className="p-1.5 rounded-full bg-slate-800 text-slate-400 group-hover:text-cyan-400 transition-colors">
+                                                <Pencil className="w-4 h-4" />
+                                            </div>
+                                            <input
+                                                value={title}
+                                                onChange={(e) => setTitle(e.target.value)}
+                                                className="flex-1 bg-transparent text-slate-200 font-medium focus:outline-none border-b border-transparent focus:border-cyan-500 hover:border-slate-700 px-1 py-0.5 transition-all"
+                                                placeholder="Query Title..."
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={handleUpdate}
+                                                disabled={isSaving}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50"
+                                            >
+                                                <Save className="w-3.5 h-3.5" />
+                                                {isSaving ? 'Saving...' : 'Save Changes'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="px-4 py-3 border-b border-white/5 bg-[#252526] text-xs text-slate-500 italic">
+                                        Select a query to edit or click "New Query" to create one.
+                                    </div>
+                                )}
+
+                                <div className="flex-1 overflow-hidden p-0 relative">
+                                    <SqlEditor code={sqlCode} onChange={selectedQuery ? setSqlCode : () => { }} />
                                 </div>
-                                <input
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="flex-1 bg-transparent text-slate-200 font-medium focus:outline-none border-b border-transparent focus:border-cyan-500 hover:border-slate-700 px-1 py-0.5 transition-all"
-                                    placeholder="Query Title..."
+                            </div>
+
+                            {/* Right: Examples (30%) */}
+                            <div className="w-[350px] h-full overflow-hidden border-l border-slate-800 bg-[#1a1b26] flex-shrink-0">
+                                <ExampleList
+                                    queries={queries}
+                                    selectedQueryId={selectedQuery?.id || null}
+                                    onSelect={handleSelectQuery}
+                                    onDelete={handleDeleteQuery}
+
+                                    onReorder={async (newQueries) => {
+                                        // Optimistic Update
+                                        setQueries(newQueries);
+
+                                        // API Update (Parallel)
+                                        try {
+                                            const updates = newQueries.map((q, index) => api.updateQueryOrder(q.id, index));
+                                            await Promise.all(updates);
+                                        } catch (e) {
+                                            console.error("Failed to reorder queries", e);
+                                            // Fallback? setQueries(oldQueries) potentially
+                                        }
+                                    }}
                                 />
                             </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={handleUpdate}
-                                    disabled={isSaving}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50"
-                                >
-                                    <Save className="w-3.5 h-3.5" />
-                                    {isSaving ? 'Saving...' : 'Save Changes'}
-                                </button>
-                            </div>
                         </div>
-                    ) : (
-                        <div className="px-4 py-3 border-b border-white/5 bg-[#252526] text-xs text-slate-500 italic">
-                            Select a query to edit or click "New Query" to create one.
-                        </div>
-                    )}
-
-                    <div className="flex-1 overflow-hidden p-0 relative">
-                        {/* Disable editor if no query selected? Or let them type but disable save? 
-                            Let's keep it enabled but maybe show specific state. 
-                            Actually, if sqlCode is state, we can just show it. 
-                        */}
-                        <SqlEditor code={sqlCode} onChange={selectedQuery ? setSqlCode : () => { }} />
                     </div>
                 </div>
-
-                {/* Right: Examples (30%) */}
-                <div className="w-[350px] h-full overflow-hidden border-l border-slate-800 bg-[#1a1b26]">
-                    <ExampleList
-                        queries={queries}
-                        selectedQueryId={selectedQuery?.id || null}
-                        onSelect={handleSelectQuery}
-                        onDelete={handleDeleteQuery}
-
-                        onReorder={async (newQueries) => {
-                            // Optimistic Update
-                            setQueries(newQueries);
-
-                            // API Update (Parallel)
-                            try {
-                                const updates = newQueries.map((q, index) => api.updateQueryOrder(q.id, index));
-                                await Promise.all(updates);
-                            } catch (e) {
-                                console.error("Failed to reorder queries", e);
-                                // Fallback? setQueries(oldQueries) potentially
-                            }
-                        }}
-                    />
-                </div>
-            </div>
+            )}
 
             <QueryCreationModal
                 isOpen={isModalOpen}
