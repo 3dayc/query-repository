@@ -342,7 +342,7 @@ export function MainContent() {
                                                     title={relatedLink}
                                                     className="flex-1 text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-medium flex items-center gap-1"
                                                 >
-                                                    🔗 데이터브릭스 바로가기
+                                                    데이터브릭스 바로가기
                                                 </a>
                                                 <button
                                                     onClick={() => setIsLinkEditing(true)}
@@ -365,15 +365,13 @@ export function MainContent() {
                                                     placeholder="https://..."
                                                     autoFocus={isLinkEditing}
                                                 />
-                                                {relatedLink && (
-                                                    <button
-                                                        onClick={() => setIsLinkEditing(false)}
-                                                        className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors"
-                                                        title="Done"
-                                                    >
-                                                        <Check className="w-3.5 h-3.5" />
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={() => setIsLinkEditing(false)}
+                                                    className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors"
+                                                    title="Done"
+                                                >
+                                                    <Check className="w-3.5 h-3.5" />
+                                                </button>
                                             </div>
                                         )}
                                     </div>
