@@ -352,7 +352,7 @@ export function MainContent() {
                                                 </a>
                                                 <button
                                                     onClick={() => setIsLinkEditing(true)}
-                                                    className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0"
+                                                    className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0"
                                                     title="Edit Link"
                                                 >
                                                     <Pencil className="w-3.5 h-3.5" />
