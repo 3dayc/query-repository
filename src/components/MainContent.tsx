@@ -289,6 +289,12 @@ export function MainContent() {
                                             <input
                                                 value={title}
                                                 onChange={(e) => setTitle(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.currentTarget.blur();
+                                                        handleUpdate();
+                                                    }
+                                                }}
                                                 className="flex-1 bg-transparent text-slate-200 font-medium focus:outline-none border-b border-transparent focus:border-cyan-500 hover:border-slate-700 px-1 py-0.5 transition-all w-full min-w-0"
                                                 placeholder="Query Title..."
                                             />
@@ -340,7 +346,7 @@ export function MainContent() {
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     title={relatedLink}
-                                                    className="flex-1 text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-medium flex items-center gap-1"
+                                                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-medium flex items-center gap-1"
                                                 >
                                                     데이터브릭스 바로가기
                                                 </a>
@@ -359,14 +365,20 @@ export function MainContent() {
                                                     onChange={(e) => setRelatedLink(e.target.value)}
                                                     onFocus={() => setIsLinkEditing(true)}
                                                     onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') setIsLinkEditing(false);
+                                                        if (e.key === 'Enter') {
+                                                            setIsLinkEditing(false);
+                                                            handleUpdate();
+                                                        }
                                                     }}
                                                     className="flex-1 bg-[#1e1e1e] border border-slate-700/50 rounded px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 font-mono transition-colors"
                                                     placeholder="https://..."
                                                     autoFocus={isLinkEditing}
                                                 />
                                                 <button
-                                                    onClick={() => setIsLinkEditing(false)}
+                                                    onClick={() => {
+                                                        setIsLinkEditing(false);
+                                                        handleUpdate();
+                                                    }}
                                                     className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors"
                                                     title="Done"
                                                 >
