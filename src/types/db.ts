@@ -26,6 +26,9 @@ export interface DbQuery {
     created_at: string;
     deleted_at?: string | null;
     related_link?: string | null;
+    created_by?: string | null; // Email
+    last_updated_by?: string | null; // Email
+    last_updated_at?: string | null; // ISO Date
 }
 
 // Joined type for UI convenience

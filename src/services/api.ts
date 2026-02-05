@@ -185,13 +185,16 @@ export const api = {
 
     // Create a new query
     // Create a new query
-    createQuery: async (tableId: string, title: string, sqlCode: string, orderIndex: number = 0, relatedLink?: string): Promise<DbQuery> => {
+    createQuery: async (tableId: string, title: string, sqlCode: string, orderIndex: number = 0, relatedLink?: string, userEmail?: string): Promise<DbQuery> => {
         const payload = {
             table_id: tableId,
             title,
             sql_code: sqlCode,
             order_index: orderIndex,
-            related_link: relatedLink
+            related_link: relatedLink,
+            created_by: userEmail,
+            last_updated_by: userEmail,
+            last_updated_at: new Date().toISOString()
         };
 
         const { data, error } = await supabase
@@ -206,13 +209,15 @@ export const api = {
 
     // Update a query
     // Update a query
-    updateQuery: async (id: string, title: string, sqlCode: string, relatedLink?: string): Promise<DbQuery> => {
+    updateQuery: async (id: string, title: string, sqlCode: string, relatedLink?: string, userEmail?: string): Promise<DbQuery> => {
         const { data, error } = await supabase
             .from('queries')
             .update({
                 title,
                 sql_code: sqlCode,
-                related_link: relatedLink
+                related_link: relatedLink,
+                last_updated_by: userEmail,
+                last_updated_at: new Date().toISOString()
             })
             .eq('id', id)
             .select()

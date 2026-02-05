@@ -122,7 +122,8 @@ export function MainContent() {
 
         setIsSaving(true);
         try {
-            const updated = await api.updateQuery(selectedQuery.id, title, sqlCode, relatedLink);
+            const userEmail = useAppStore.getState().user?.email;
+            const updated = await api.updateQuery(selectedQuery.id, title, sqlCode, relatedLink, userEmail);
             setQueries(queries.map(q => q.id === updated.id ? updated : q));
             setSelectedQuery(updated);
             showToast('Query saved successfully!', 'success');
@@ -138,7 +139,8 @@ export function MainContent() {
     const handleCreate = async (newTitle: string, newSql: string, newLink?: string) => {
         if (!table) return;
         try {
-            const newQuery = await api.createQuery(table.id, newTitle, newSql, queries.length, newLink);
+            const userEmail = useAppStore.getState().user?.email;
+            const newQuery = await api.createQuery(table.id, newTitle, newSql, queries.length, newLink, userEmail);
             setQueries([...queries, newQuery]);
             handleSelectQuery(newQuery); // Auto-select the new query
         } catch (error) {
@@ -291,7 +293,19 @@ export function MainContent() {
                                                 placeholder="Query Title..."
                                             />
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-4">
+                                            {/* Audit Info */}
+                                            {(selectedQuery.last_updated_at || selectedQuery.created_by) && (
+                                                <div className="hidden lg:flex flex-col items-end justify-center text-[10px] text-slate-500 leading-tight">
+                                                    {selectedQuery.last_updated_at && (
+                                                        <span>{new Date(selectedQuery.last_updated_at).toLocaleString()}</span>
+                                                    )}
+                                                    {selectedQuery.last_updated_by && (
+                                                        <span className="text-slate-600">by {selectedQuery.last_updated_by}</span>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             <button
                                                 onClick={handleUpdate}
                                                 disabled={isSaving || !isModified}

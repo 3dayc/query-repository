@@ -35,6 +35,7 @@ import clsx from 'clsx';
 import type { DbFolder, DbTable } from '../types/db';
 import { TableEditModal } from './TableEditModal';
 import { FolderEditModal } from './FolderEditModal';
+import { isSuperAdmin } from '../utils/whitelist';
 
 // --- Sortable Items Components ---
 
@@ -128,13 +129,15 @@ function SortableFolderItem({ folder, tables, isExpanded, onToggle, onEditTable,
                     >
                         <Pencil className="w-3 h-3" />
                     </button>
-                    <button
-                        onClick={handleDelete}
-                        className="p-1 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded transition-all"
-                        title="Delete Folder"
-                    >
-                        <Trash2 className="w-3 h-3" />
-                    </button>
+                    {isSuperAdmin(useAppStore.getState().user?.email) && (
+                        <button
+                            onClick={handleDelete}
+                            className="p-1 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded transition-all"
+                            title="Delete Folder"
+                        >
+                            <Trash2 className="w-3 h-3" />
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -556,13 +559,15 @@ export function Sidebar() {
                         </h1>
                     </div>
                     <div className="flex gap-1">
-                        <button
-                            onClick={() => setIsCreatingFolder(true)}
-                            className="p-2 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors touch-manipulation"
-                            title="New Folder"
-                        >
-                            <Folder className="w-5 h-5" />
-                        </button>
+                        {isSuperAdmin(useAppStore.getState().user?.email) && (
+                            <button
+                                onClick={() => setIsCreatingFolder(true)}
+                                className="p-2 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors touch-manipulation"
+                                title="New Folder"
+                            >
+                                <Folder className="w-5 h-5" />
+                            </button>
+                        )}
                         <button
                             onClick={() => { setIsCreatingTable(true); setActiveFolderForNewTable(null); }}
                             className="p-2 hover:bg-slate-800 rounded text-slate-400 hover:text-cyan-400 transition-colors touch-manipulation"
