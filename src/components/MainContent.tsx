@@ -279,7 +279,7 @@ export function MainContent() {
 
                     {/* Body */}
                     <div className="flex-1 overflow-auto bg-[#1e1e1e]">
-                        <div className="flex flex-col md:flex-row h-full w-full md:min-w-[1000px] min-w-0">
+                        <div className="flex flex-col md:flex-row h-full w-full min-w-0">
                             {/* Left: Editor (Mobile: Top, Desktop: Left 70%) */}
                             <div className="flex-1 flex flex-col border-r border-slate-800 border-b md:border-b-0 min-h-[50vh] md:min-h-0">
                                 {/* Editor Toolbar (Only visible if a query is selected) */}
