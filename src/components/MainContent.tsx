@@ -339,9 +339,10 @@ export function MainContent() {
                                                     href={relatedLink}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex-1 text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-mono"
+                                                    title={relatedLink}
+                                                    className="flex-1 text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-medium flex items-center gap-1"
                                                 >
-                                                    {relatedLink}
+                                                    🔗 데이터브릭스 바로가기
                                                 </a>
                                                 <button
                                                     onClick={() => setIsLinkEditing(true)}
