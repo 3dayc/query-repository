@@ -3,16 +3,44 @@ import { X, Send, Bot, Sparkles, Copy, Check, User } from 'lucide-react';
 import { geminiService, type ChatMessage } from '../services/gemini';
 import { SqlEditor } from './SqlEditor';
 
+import { useAppStore } from '../store/useAppStore';
+
 interface AIAssistantPanelProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
 export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
+    const user = useAppStore(state => state.user);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Load History
+    useEffect(() => {
+        if (!user?.email) {
+            setMessages([]);
+            return;
+        }
+        const saved = localStorage.getItem(`chat_history_${user.email}`);
+        if (saved) {
+            try {
+                setMessages(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse chat history", e);
+            }
+        } else {
+            setMessages([]);
+        }
+    }, [user?.email]);
+
+    // Save History
+    useEffect(() => {
+        if (user?.email && messages.length > 0) {
+            localStorage.setItem(`chat_history_${user.email}`, JSON.stringify(messages));
+        }
+    }, [messages, user?.email]);
 
     // Auto-scroll
     useEffect(() => {
