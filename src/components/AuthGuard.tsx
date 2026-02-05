@@ -36,10 +36,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             if (!session) {
-                // Just let it be, handled by useEffect check or user navigating
-                // But if session becomes null, we should redirect
-                // navigate('/login') might crash if component unmounts? 
-                // Safety check:
+                navigate('/login', { replace: true });
             } else {
                 const email = session.user.email;
                 if (!isEmailWhitelisted(email)) {
