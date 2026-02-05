@@ -18,7 +18,7 @@ export const geminiService = {
 
         const genAI = new GoogleGenerativeAI(API_KEY);
         // Using gemini-1.5-flash as requested
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
         // 1. Fetch Full Context
         // We use store for Folders/Tables, but Queries might be partial in store (fetched on demand).

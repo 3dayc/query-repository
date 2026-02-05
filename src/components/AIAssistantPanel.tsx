@@ -63,7 +63,7 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                 );
             } else {
                 if (!part.trim()) return null;
-                return <p key={idx} className="whitespace-pre-wrap mb-2 text-sm leading-relaxed">{part}</p>;
+                return <p key={idx} className="whitespace-pre-wrap break-words mb-2 text-sm leading-relaxed">{part}</p>;
             }
         });
     };
@@ -78,9 +78,9 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                 />
             )}
 
-            <div className={`fixed inset-y-0 right-0 w-full sm:w-[450px] bg-[#1a1b26] border-l border-slate-700 shadow-2xl transform transition-transform duration-300 z-[60] flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className={`fixed inset-y-0 right-0 w-full sm:w-[700px] bg-[#1a1b26] border-l border-slate-700 shadow-2xl transform transition-transform duration-300 z-[60] flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 {/* Header */}
-                <div className="h-14 border-b border-slate-700 flex items-center justify-between px-4 bg-[#16161e] flex-shrink-0">
+                <div className="h-16 border-b border-slate-700 flex items-center justify-between px-4 bg-[#16161e] flex-shrink-0">
                     <div className="flex items-center gap-2 text-cyan-400">
                         <Sparkles className="w-5 h-5" />
                         <span className="font-bold tracking-wide">AI Query Assistant</span>
@@ -133,24 +133,26 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
 
                 {/* Input Area */}
                 <div className="p-4 bg-[#16161e] border-t border-slate-700 flex-shrink-0">
-                    <div className="relative">
+                    <div className="flex items-center gap-2 bg-[#0f1016] border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500/50 transition-all">
                         <textarea
+                            rows={1}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
+                                    if (e.nativeEvent.isComposing) return;
                                     e.preventDefault();
                                     handleSend();
                                 }
                             }}
                             placeholder="Describe the query you need..."
-                            className="w-full bg-[#0f1016] border border-slate-700 rounded-lg pl-4 pr-12 py-3 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 resize-none h-14 max-h-32 min-h-[56px] custom-scrollbar"
+                            className="flex-1 bg-transparent border-none text-sm text-slate-200 focus:ring-0 focus:outline-none resize-none max-h-32 min-h-[40px] py-2.5 custom-scrollbar placeholder:text-slate-500"
                             style={{ lineHeight: '1.5' }}
                         />
                         <button
                             onClick={handleSend}
                             disabled={isLoading || !input.trim()}
-                            className="absolute right-2 top-2 p-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-md transition-colors"
+                            className="p-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-md transition-colors flex-shrink-0 shadow-sm"
                         >
                             <Send className="w-4 h-4" />
                         </button>
