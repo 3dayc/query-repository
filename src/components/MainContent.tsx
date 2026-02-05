@@ -357,6 +357,7 @@ export function MainContent() {
                                                 <input
                                                     value={relatedLink}
                                                     onChange={(e) => setRelatedLink(e.target.value)}
+                                                    onFocus={() => setIsLinkEditing(true)}
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter') setIsLinkEditing(false);
                                                     }}
