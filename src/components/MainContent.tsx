@@ -298,10 +298,10 @@ export function MainContent() {
                                             {(selectedQuery.last_updated_at || selectedQuery.created_by) && (
                                                 <div className="hidden lg:flex flex-col items-end justify-center text-[10px] text-slate-500 leading-tight">
                                                     {selectedQuery.last_updated_at && (
-                                                        <span>{new Date(selectedQuery.last_updated_at).toLocaleString()}</span>
+                                                        <span>Updated: {new Date(selectedQuery.last_updated_at).toLocaleString()}</span>
                                                     )}
-                                                    {selectedQuery.last_updated_by && (
-                                                        <span className="text-slate-600">by {selectedQuery.last_updated_by}</span>
+                                                    {selectedQuery.created_by && (
+                                                        <span className="text-slate-600">Creator: {selectedQuery.created_by.split('@')[0]}</span>
                                                     )}
                                                 </div>
                                             )}
