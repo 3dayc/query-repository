@@ -19,11 +19,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            const email = session.user.email;
+            const email = session.user.email || session.user.user_metadata?.email;
+            console.log('Auth check for:', email);
+
             if (!isEmailWhitelisted(email)) {
                 // Not allowed
                 supabase.auth.signOut();
-                useAppStore.getState().showToast('Access Denied: Email not whitelisted.', 'error');
+                useAppStore.getState().showToast(`Access Denied: ${email} is not whitelisted.`, 'error');
                 navigate('/login', { replace: true });
                 setIsLoading(false);
             } else {
@@ -38,10 +40,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             if (!session) {
                 navigate('/login', { replace: true });
             } else {
-                const email = session.user.email;
+                const email = session.user.email || session.user.user_metadata?.email;
+                console.log('AuthStateChange check for:', email);
+
                 if (!isEmailWhitelisted(email)) {
                     supabase.auth.signOut();
-                    useAppStore.getState().showToast('Access Denied: Email not whitelisted.', 'error');
+                    useAppStore.getState().showToast(`Access Denied: ${email} is not whitelisted.`, 'error');
                 } else {
                     setUser(session.user);
                 }
