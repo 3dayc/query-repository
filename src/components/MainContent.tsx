@@ -301,7 +301,7 @@ export function MainContent() {
                                                         <span>Updated: {new Date(selectedQuery.last_updated_at).toLocaleString()}</span>
                                                     )}
                                                     {selectedQuery.created_by && (
-                                                        <span className="text-slate-600">Creator: {selectedQuery.created_by.split('@')[0]}</span>
+                                                        <span className="text-slate-600">Created: {selectedQuery.created_by.split('@')[0]}</span>
                                                     )}
                                                 </div>
                                             )}
