@@ -7,12 +7,15 @@ import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
 import { SearchBar } from './SearchBar';
+import { AIAssistantPanel } from './AIAssistantPanel';
+import { Sparkles } from 'lucide-react';
 
 export function MainContent() {
     const {
         selectedTableId, tables, openAlert, targetQueryId,
         setTargetQueryId, toggleMobileMenu, showToast, toast,
-        setHasUnsavedChanges, checkUnsavedChanges
+        setHasUnsavedChanges, checkUnsavedChanges,
+        isAIPanelOpen, toggleAIPanel
     } = useAppStore();
     const table = tables.find(t => t.id === selectedTableId);
 
@@ -174,6 +177,18 @@ export function MainContent() {
                 <div className="flex-1 max-w-2xl">
                     <SearchBar />
                 </div>
+
+                <button
+                    onClick={toggleAIPanel}
+                    className={`ml-4 p-2 rounded-md transition-all flex items-center gap-2 font-medium text-sm
+                        ${isAIPanelOpen
+                            ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
+                            : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800'
+                        }`}
+                >
+                    <Sparkles className="w-5 h-5" />
+                    <span className="hidden md:inline">Ask AI</span>
+                </button>
             </div>
 
             {/* Main Content Area */}
@@ -380,6 +395,8 @@ export function MainContent() {
                     </div>
                 )
             }
+
+            <AIAssistantPanel isOpen={isAIPanelOpen} onClose={toggleAIPanel} />
         </div >
     );
 }

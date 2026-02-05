@@ -24,6 +24,11 @@ interface AppState {
     toggleMobileMenu: () => void;
     setMobileMenuOpen: (isOpen: boolean) => void;
 
+    // AI Panel
+    isAIPanelOpen: boolean;
+    toggleAIPanel: () => void;
+    setAIPanelOpen: (isOpen: boolean) => void;
+
     // Optimistic updates (UI only, API calls should be handled by caller or thunk-like pattern)
     setFolders: (folders: DbFolder[]) => void;
     setTables: (tables: DbTable[]) => void;
@@ -124,6 +129,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     isMobileMenuOpen: false,
     toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
     setMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
+
+    isAIPanelOpen: false,
+    toggleAIPanel: () => set((state) => ({ isAIPanelOpen: !state.isAIPanelOpen })),
+    setAIPanelOpen: (isOpen) => set({ isAIPanelOpen: isOpen }),
 
     setFolders: (folders) => set({ folders }),
     setTables: (tables) => set({ tables }),
