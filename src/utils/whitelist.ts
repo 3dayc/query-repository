@@ -1,10 +1,10 @@
 export const ALLOWED_EMAILS = [
     'thanksrgg@gmail.com',
     'dale8@nol-universe.com',
-    // '9mini@nol-universe.com',
-    // 'raina@nol-universe.com',
+    '9mini@nol-universe.com',
+    'raina@nol-universe.com',
     'amy25@nol-universe.com',
-    // 'chloe@nol-universe.com',
+    'chloe@nol-universe.com',
 ];
 
 export const SUPER_ADMIN_EMAILS = [
