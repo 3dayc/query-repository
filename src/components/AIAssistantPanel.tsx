@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Send, Bot, Sparkles, Copy, Check, User } from 'lucide-react';
-import { geminiService, type ChatMessage } from '../services/gemini';
+import { polyGlobalService, type ChatMessage } from '../services/polyllm';
 import { SqlEditor } from './SqlEditor';
 import { api } from '../services/api';
 
@@ -38,8 +38,6 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
     }, [user?.email]);
 
     // Save History (with simple debounce by logic location)
-    // Actually, we can just save whenever 'messages' changes.
-    // To avoid too many writes, we can use a timeout or just letting it be for now as traffic is low.
     useEffect(() => {
         const timer = setTimeout(() => {
             if (user?.email && messages.length > 0) {
@@ -66,12 +64,12 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
 
         try {
             // Pass recent history to the service
-            const replyText = await geminiService.generateResponse(userMsg.text, messages);
+            const replyText = await polyGlobalService.generateResponse(userMsg.text, messages);
 
             const aiMsg: ChatMessage = { role: 'model', text: replyText };
             setMessages(prev => [...prev, aiMsg]);
         } catch (error: any) {
-            console.error("Gemini Error:", error);
+            console.error("PolyLLM Error:", error);
             const errorMessage = error?.message || "Unknown error occurred.";
             setMessages(prev => [...prev, { role: 'model', text: `Connection Failed: ${errorMessage}` }]);
         } finally {
@@ -133,7 +131,7 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                                 <Bot className="w-8 h-8 text-cyan-400" />
                             </div>
                             <p className="text-sm text-center">
-                                Ask me anything about your data.<br />I can write queries for you!
+                                Ask me anything about your data.<br />PolyLLM is ready to help!
                             </p>
                         </div>
                     )}
@@ -155,7 +153,7 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                                 <Bot className="w-5 h-5 text-white/50" />
                             </div>
                             <div className="bg-slate-800/50 rounded-lg px-4 py-3 flex items-center gap-3 text-sm text-slate-400">
-                                <span>Gemini is generating SQL...</span>
+                                <span>PolyLLM이 쿼리를 분석 중입니다...</span>
                                 <div className="flex gap-1">
                                     <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                                     <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
