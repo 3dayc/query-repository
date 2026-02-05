@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import type { DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
-import { Database, Save, FilePlus, Menu, Link as LinkIcon, Pencil, Check } from 'lucide-react';
+import { Database, Save, FilePlus, Menu, Link as LinkIcon, Pencil, Check, LogOut } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
@@ -13,7 +13,7 @@ import { Sparkles } from 'lucide-react';
 export function MainContent() {
     const {
         selectedTableId, tables, openAlert, targetQueryId,
-        setTargetQueryId, toggleMobileMenu, showToast, toast,
+        setTargetQueryId, toggleMobileMenu, showToast,
         setHasUnsavedChanges, checkUnsavedChanges,
         isAIPanelOpen, toggleAIPanel
     } = useAppStore();
@@ -178,17 +178,43 @@ export function MainContent() {
                     <SearchBar />
                 </div>
 
-                <button
-                    onClick={toggleAIPanel}
-                    className={`ml-4 p-2 rounded-md transition-all flex items-center gap-2 font-medium text-sm
+                <div className="flex items-center gap-3 ml-4 border-l border-slate-700 pl-4">
+                    <button
+                        onClick={toggleAIPanel}
+                        className={`p-2 rounded-md transition-all flex items-center gap-2 font-medium text-sm
                         ${isAIPanelOpen
-                            ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
-                            : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800'
-                        }`}
-                >
-                    <Sparkles className="w-5 h-5" />
-                    <span className="hidden md:inline">Ask AI</span>
-                </button>
+                                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
+                                : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800'
+                            }`}
+                        title="Ask AI Assistant"
+                    >
+                        <Sparkles className="w-5 h-5" />
+                        <span className="hidden lg:inline">Ask AI</span>
+                    </button>
+
+                    {/* User Profile */}
+                    <div className="flex items-center gap-3">
+                        {useAppStore.getState().user?.user_metadata?.avatar_url ? (
+                            <img
+                                src={useAppStore.getState().user.user_metadata.avatar_url}
+                                alt="User"
+                                className="w-8 h-8 rounded-full border border-slate-600"
+                            />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 border border-slate-600">
+                                {useAppStore.getState().user?.email?.[0].toUpperCase() || 'U'}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => useAppStore.getState().signOut()}
+                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-md transition-colors"
+                            title="Sign Out"
+                        >
+                            <LogOut className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Main Content Area */}
@@ -376,25 +402,7 @@ export function MainContent() {
                 onSave={handleCreate}
             />
 
-            {/* Global Toast */}
-            {
-                toast.message && (
-                    <div
-                        className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-5 py-3 
-                        bg-[#1e1e2e] border border-slate-700/50 shadow-2xl rounded-r-md rounded-l-sm
-                        transition-opacity duration-500 ease-in-out
-                        ${toast.isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}
-                        ${toast.type === 'error' ? 'border-l-[3px] border-l-rose-500' :
-                                toast.type === 'success' ? 'border-l-[3px] border-l-emerald-500' :
-                                    'border-l-[3px] border-l-cyan-500'}
-                    `}
-                    >
-                        {toast.type === 'success' && <div className="text-emerald-500"><Save className="w-4 h-4" /></div>}
-                        {toast.type === 'error' && <div className="w-4 h-4 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 font-bold text-xs">!</div>}
-                        <span className="font-medium text-sm text-slate-200 tracking-wide">{toast.message}</span>
-                    </div>
-                )
-            }
+
 
             <AIAssistantPanel isOpen={isAIPanelOpen} onClose={toggleAIPanel} />
         </div >

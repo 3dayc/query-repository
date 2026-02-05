@@ -77,6 +77,10 @@ interface AppState {
     hasUnsavedChanges: boolean;
     setHasUnsavedChanges: (has: boolean) => void;
     checkUnsavedChanges: (action: () => void) => void;
+    // Auth State
+    user: any | null; // Supabase User
+    setUser: (user: any | null) => void;
+    signOut: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -87,6 +91,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     isReady: false,
     expandedFolderIds: [],
     targetQueryId: null,
+
+    // Auth Init
+    user: null,
+    setUser: (user) => set({ user }),
+    signOut: async () => {
+        const { supabase } = await import('../lib/supabase');
+        await supabase.auth.signOut();
+        set({ user: null, isReady: false }); // Reset ready state to force re-check? Or just user null.
+        // Also clear data if needed for security
+        set({ folders: [], tables: [], selectedTableId: null });
+    },
 
     fetchData: async () => {
         set({ isLoading: true });
@@ -102,6 +117,8 @@ export const useAppStore = create<AppState>((set, get) => ({
             set({ isLoading: false, isReady: true });
         }
     },
+
+    // ... rest of store ...
 
     setSelectedTableId: (id) => set({ selectedTableId: id, targetQueryId: null }),
 
