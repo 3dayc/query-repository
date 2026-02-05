@@ -339,20 +339,20 @@ export function MainContent() {
                                                     href={relatedLink}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-mono"
+                                                    className="flex-1 text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-mono"
                                                 >
                                                     {relatedLink}
                                                 </a>
                                                 <button
                                                     onClick={() => setIsLinkEditing(true)}
-                                                    className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                    className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0"
                                                     title="Edit Link"
                                                 >
                                                     <Pencil className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="flex-1 flex items-center gap-2">
+                                            <div className="flex-1 flex items-center gap-2 min-w-0">
                                                 <input
                                                     value={relatedLink}
                                                     onChange={(e) => setRelatedLink(e.target.value)}
