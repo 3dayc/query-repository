@@ -311,6 +311,32 @@ export const api = {
         // 3. Delete Folders (Foreign keys set to SET NULL automatically unlinks active tables)
         const { error: errorF } = await supabase.from('folders').delete().not('deleted_at', 'is', null);
         if (errorF) throw errorF;
+    },
+
+    // --- Chat History ---
+    getChatHistory: async (email: string) => {
+        const { data, error } = await supabase
+            .from('user_chat_history')
+            .select('messages')
+            .eq('user_email', email)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 is 'not found'
+            console.error('Error fetching chat history:', error);
+        }
+        return data?.messages || [];
+    },
+
+    saveChatHistory: async (email: string, messages: any[]) => {
+        const { error } = await supabase
+            .from('user_chat_history')
+            .upsert({
+                user_email: email,
+                messages: messages,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_email' });
+
+        if (error) console.error('Error saving chat history:', error);
     }
 };
 

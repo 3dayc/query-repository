@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { X, Send, Bot, Sparkles, Copy, Check, User } from 'lucide-react';
 import { geminiService, type ChatMessage } from '../services/gemini';
 import { SqlEditor } from './SqlEditor';
+import { api } from '../services/api';
 
 import { useAppStore } from '../store/useAppStore';
 
@@ -11,7 +12,7 @@ interface AIAssistantPanelProps {
 }
 
 export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
-    const user = useAppStore(state => state.user);
+    const { user } = useAppStore();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -19,27 +20,33 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
 
     // Load History
     useEffect(() => {
-        if (!user?.email) {
-            setMessages([]);
-            return;
-        }
-        const saved = localStorage.getItem(`chat_history_${user.email}`);
-        if (saved) {
-            try {
-                setMessages(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to parse chat history", e);
+        async function load() {
+            if (!user?.email) {
+                setMessages([]);
+                return;
             }
-        } else {
-            setMessages([]);
+            try {
+                const history = await api.getChatHistory(user.email);
+                if (history && Array.isArray(history)) {
+                    setMessages(history);
+                }
+            } catch (error) {
+                console.error("Failed to load chat history", error);
+            }
         }
+        load();
     }, [user?.email]);
 
-    // Save History
+    // Save History (with simple debounce by logic location)
+    // Actually, we can just save whenever 'messages' changes.
+    // To avoid too many writes, we can use a timeout or just letting it be for now as traffic is low.
     useEffect(() => {
-        if (user?.email && messages.length > 0) {
-            localStorage.setItem(`chat_history_${user.email}`, JSON.stringify(messages));
-        }
+        const timer = setTimeout(() => {
+            if (user?.email && messages.length > 0) {
+                api.saveChatHistory(user.email, messages);
+            }
+        }, 1000); // 1s debounce
+        return () => clearTimeout(timer);
     }, [messages, user?.email]);
 
     // Auto-scroll
