@@ -9,7 +9,7 @@ export const SUPER_ADMIN_EMAILS = [
 
 export function isEmailWhitelisted(email: string | undefined | null): boolean {
     if (!email) return false;
-    return ALLOWED_EMAILS.includes(email);
+    return ALLOWED_EMAILS.includes(email.toLowerCase().trim());
 }
 
 export function isSuperAdmin(email: string | undefined | null): boolean {
