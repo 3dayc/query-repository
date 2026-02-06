@@ -619,7 +619,7 @@ export function Sidebar() {
                                 className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 mb-2"
                             />
                             <textarea
-                                placeholder="Description (Optional)"
+                                placeholder="Description"
                                 value={newTableDescription}
                                 onChange={e => setNewTableDescription(e.target.value)}
                                 className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 mb-2 resize-none h-16"

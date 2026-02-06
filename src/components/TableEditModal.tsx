@@ -69,7 +69,7 @@ export function TableEditModal({ isOpen, onClose, initialName, initialDescriptio
                         <input
                             value={schema}
                             onChange={(e) => setSchema(e.target.value)}
-                            placeholder="public"
+                            placeholder="Schema"
                             className="w-full bg-[#13141f] border border-slate-700 rounded-md px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
                         />
                     </div>
@@ -81,7 +81,7 @@ export function TableEditModal({ isOpen, onClose, initialName, initialDescriptio
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g., users"
+                            placeholder="Table Name"
                             className="w-full bg-[#13141f] border border-slate-700 rounded-md px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
                             autoFocus
                         />
@@ -95,7 +95,7 @@ export function TableEditModal({ isOpen, onClose, initialName, initialDescriptio
                             rows={3}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Optional"
+                            placeholder="Description"
                             className="w-full bg-[#13141f] border border-slate-700 rounded-md px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 resize-none"
                         />
                     </div>
