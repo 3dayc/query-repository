@@ -446,7 +446,7 @@ export function Sidebar() {
 
         const nameToSave = newTableName;
         const descToSave = newTableDescription;
-        const schemaToSave = newTableSchema.trim() || 'public';
+        const schemaToSave = newTableSchema.trim();
         const targetFolderId = activeFolderForNewTable;
 
         setNewTableName('');
