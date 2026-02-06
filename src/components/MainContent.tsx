@@ -347,7 +347,11 @@ export function MainContent() {
                                         )}
 
                                         <div className="flex-1 overflow-hidden p-0 relative">
-                                            <SqlEditor code={sqlCode} onChange={selectedQuery ? setSqlCode : () => { }} />
+                                            <SqlEditor
+                                                code={sqlCode}
+                                                onChange={selectedQuery ? setSqlCode : () => { }}
+                                                onSave={handleUpdate}
+                                            />
                                         </div>
 
                                         {/* Link Input (Below Editor) */}

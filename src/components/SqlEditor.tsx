@@ -10,9 +10,17 @@ interface SqlEditorProps {
     onChange: (code: string) => void;
     readOnly?: boolean;
     minimal?: boolean;
+    onSave?: () => void;
 }
 
-export function SqlEditor({ code, onChange, readOnly = false, minimal = false }: SqlEditorProps) {
+export function SqlEditor({ code, onChange, readOnly = false, minimal = false, onSave }: SqlEditorProps) {
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+            e.preventDefault();
+            onSave?.();
+        }
+    };
+
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
@@ -26,7 +34,10 @@ export function SqlEditor({ code, onChange, readOnly = false, minimal = false }:
     };
 
     return (
-        <div className={`flex flex-col h-full bg-[#1e1e1e] rounded-lg border border-slate-700 overflow-hidden shadow-xl ${minimal ? 'border-0 shadow-none bg-transparent' : ''}`}>
+        <div
+            className={`flex flex-col h-full bg-[#1e1e1e] rounded-lg border border-slate-700 overflow-hidden shadow-xl ${minimal ? 'border-0 shadow-none bg-transparent' : ''}`}
+            onKeyDown={handleKeyDown}
+        >
             {!minimal && (
                 <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-black/20">
                     <div className="flex items-center gap-2">
