@@ -290,7 +290,8 @@ export function Sidebar() {
         collapseAllFolders,
         checkUnsavedChanges,
         viewMode,
-        setViewMode
+        setViewMode,
+        setAIPanelOpen
     } = useAppStore();
 
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -550,6 +551,7 @@ export function Sidebar() {
                                 collapseAllFolders();
                                 setViewMode('main');
                                 setMobileMenuOpen(false);
+                                setAIPanelOpen(false);
                             });
                         }}
                     >
