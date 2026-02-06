@@ -282,111 +282,132 @@ export function MainContent() {
                         <div className="flex flex-col md:flex-row h-full w-full min-w-0">
                             {/* Left: Editor (Mobile: Top, Desktop: Left 70%) */}
                             <div className="flex-1 flex flex-col border-r border-slate-800 border-b md:border-b-0 min-h-[50vh] md:min-h-0">
-                                {/* Editor Toolbar (Only visible if a query is selected) */}
-                                {selectedQuery ? (
-                                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#252526]">
-                                        <div className="flex items-center gap-2 w-1/2 group">
-                                            <input
-                                                value={title}
-                                                onChange={(e) => setTitle(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.currentTarget.blur();
-                                                        handleUpdate();
-                                                    }
-                                                }}
-                                                className="flex-1 bg-transparent text-slate-200 font-medium focus:outline-none border-b border-transparent focus:border-cyan-500 hover:border-slate-700 px-1 py-0.5 transition-all w-full min-w-0"
-                                                placeholder="Query Title..."
-                                            />
+                                {queries.length === 0 ? (
+                                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500">
+                                        <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-6 ring-1 ring-white/5">
+                                            <FilePlus className="w-8 h-8 text-cyan-500/50" />
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            {/* Audit Info */}
-                                            {(selectedQuery.last_updated_at || selectedQuery.created_by) && (
-                                                <div className="hidden lg:flex flex-col items-end justify-center text-[10px] text-slate-500 leading-tight">
-                                                    {selectedQuery.last_updated_at && (
-                                                        <span>Updated: {new Date(selectedQuery.last_updated_at).toLocaleString()}</span>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            <button
-                                                onClick={handleUpdate}
-                                                disabled={isSaving || !isModified}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500 whitespace-nowrap"
-                                            >
-                                                <Save className="w-3.5 h-3.5" />
-                                                <span className="hidden sm:inline">Save</span>
-                                                <span className="sm:hidden">Save</span>
-                                            </button>
-                                        </div>
+                                        <h3 className="text-slate-200 font-semibold text-lg mb-2">No Queries Found</h3>
+                                        <p className="text-sm text-slate-400 max-w-xs mb-8 leading-relaxed">
+                                            This table doesn't have any saved queries yet.<br />
+                                            Create your first query to get started!
+                                        </p>
+                                        <button
+                                            onClick={() => setIsModalOpen(true)}
+                                            className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-semibold shadow-lg shadow-cyan-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                                        >
+                                            <FilePlus className="w-4 h-4" />
+                                            Create New Query
+                                        </button>
                                     </div>
                                 ) : (
-                                    <div className="px-4 py-3 border-b border-white/5 bg-[#252526] text-xs text-slate-500 italic">
-                                        Select a query to edit or click "New Query" to create one.
-                                    </div>
-                                )}
+                                    <>
+                                        {/* Editor Toolbar (Only visible if a query is selected) */}
+                                        {selectedQuery ? (
+                                            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#252526]">
+                                                <div className="flex items-center gap-2 w-1/2 group">
+                                                    <input
+                                                        value={title}
+                                                        onChange={(e) => setTitle(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.currentTarget.blur();
+                                                                handleUpdate();
+                                                            }
+                                                        }}
+                                                        className="flex-1 bg-transparent text-slate-200 font-medium focus:outline-none border-b border-transparent focus:border-cyan-500 hover:border-slate-700 px-1 py-0.5 transition-all w-full min-w-0"
+                                                        placeholder="Query Title..."
+                                                    />
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    {/* Audit Info */}
+                                                    {(selectedQuery.last_updated_at || selectedQuery.created_by) && (
+                                                        <div className="hidden lg:flex flex-col items-end justify-center text-[10px] text-slate-500 leading-tight">
+                                                            {selectedQuery.last_updated_at && (
+                                                                <span>Updated: {new Date(selectedQuery.last_updated_at).toLocaleString()}</span>
+                                                            )}
+                                                        </div>
+                                                    )}
 
-                                <div className="flex-1 overflow-hidden p-0 relative">
-                                    <SqlEditor code={sqlCode} onChange={selectedQuery ? setSqlCode : () => { }} />
-                                </div>
-
-                                {/* Link Input (Below Editor) */}
-                                {/* Link Input (Below Editor) */}
-                                {selectedQuery && (
-                                    <div className="h-12 border-t border-slate-800 bg-[#252526] flex items-center px-4 gap-4 flex-shrink-0">
-                                        <div className="flex items-center gap-2 text-slate-500">
-                                            <LinkIcon className="w-4 h-4" />
-                                            <span className="text-xs font-semibold uppercase tracking-wider">Link</span>
-                                        </div>
-
-                                        {!isLinkEditing && relatedLink ? (
-                                            <div className="flex-1 flex items-center gap-2 min-w-0 group">
-                                                <a
-                                                    href={relatedLink}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    title={relatedLink}
-                                                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-medium flex items-center gap-1"
-                                                >
-                                                    데이터브릭스 바로가기
-                                                </a>
-                                                <button
-                                                    onClick={() => setIsLinkEditing(true)}
-                                                    className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0"
-                                                    title="Edit Link"
-                                                >
-                                                    <Pencil className="w-3.5 h-3.5" />
-                                                </button>
+                                                    <button
+                                                        onClick={handleUpdate}
+                                                        disabled={isSaving || !isModified}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500 whitespace-nowrap"
+                                                    >
+                                                        <Save className="w-3.5 h-3.5" />
+                                                        <span className="hidden sm:inline">Save</span>
+                                                        <span className="sm:hidden">Save</span>
+                                                    </button>
+                                                </div>
                                             </div>
                                         ) : (
-                                            <div className="flex-1 flex items-center gap-2 min-w-0">
-                                                <input
-                                                    value={relatedLink}
-                                                    onChange={(e) => setRelatedLink(e.target.value)}
-                                                    onFocus={() => setIsLinkEditing(true)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            setIsLinkEditing(false);
-                                                            handleUpdate();
-                                                        }
-                                                    }}
-                                                    className="flex-1 bg-[#1e1e1e] border border-slate-700/50 rounded px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 font-mono transition-colors"
-                                                    placeholder="https://..."
-                                                    autoFocus={isLinkEditing}
-                                                />
-                                                <button
-                                                    onClick={() => {
-                                                        setIsLinkEditing(false);
-                                                        handleUpdate();
-                                                    }}
-                                                    className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors"
-                                                    title="Done"
-                                                >
-                                                    <Check className="w-3.5 h-3.5" />
-                                                </button>
+                                            <div className="px-4 py-3 border-b border-white/5 bg-[#252526] text-xs text-slate-500 italic">
+                                                Select a query to edit or click "New Query" to create one.
                                             </div>
                                         )}
-                                    </div>
+
+                                        <div className="flex-1 overflow-hidden p-0 relative">
+                                            <SqlEditor code={sqlCode} onChange={selectedQuery ? setSqlCode : () => { }} />
+                                        </div>
+
+                                        {/* Link Input (Below Editor) */}
+                                        {selectedQuery && (
+                                            <div className="h-12 border-t border-slate-800 bg-[#252526] flex items-center px-4 gap-4 flex-shrink-0">
+                                                <div className="flex items-center gap-2 text-slate-500">
+                                                    <LinkIcon className="w-4 h-4" />
+                                                    <span className="text-xs font-semibold uppercase tracking-wider">Link</span>
+                                                </div>
+
+                                                {!isLinkEditing && relatedLink ? (
+                                                    <div className="flex-1 flex items-center gap-2 min-w-0 group">
+                                                        <a
+                                                            href={relatedLink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            title={relatedLink}
+                                                            className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate font-medium flex items-center gap-1"
+                                                        >
+                                                            데이터브릭스 바로가기
+                                                        </a>
+                                                        <button
+                                                            onClick={() => setIsLinkEditing(true)}
+                                                            className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0"
+                                                            title="Edit Link"
+                                                        >
+                                                            <Pencil className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex-1 flex items-center gap-2 min-w-0">
+                                                        <input
+                                                            value={relatedLink}
+                                                            onChange={(e) => setRelatedLink(e.target.value)}
+                                                            onFocus={() => setIsLinkEditing(true)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    setIsLinkEditing(false);
+                                                                    handleUpdate();
+                                                                }
+                                                            }}
+                                                            className="flex-1 bg-[#1e1e1e] border border-slate-700/50 rounded px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 font-mono transition-colors"
+                                                            placeholder="https://..."
+                                                            autoFocus={isLinkEditing}
+                                                        />
+                                                        <button
+                                                            onClick={() => {
+                                                                setIsLinkEditing(false);
+                                                                handleUpdate();
+                                                            }}
+                                                            className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors"
+                                                            title="Done"
+                                                        >
+                                                            <Check className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
 
