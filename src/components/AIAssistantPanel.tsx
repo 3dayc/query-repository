@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, Sparkles, Copy, Check, User } from 'lucide-react';
+import { X, Send, Bot, Sparkles, Copy, Check, User, ChevronDown } from 'lucide-react';
 import { polyGlobalService, type ChatMessage } from '../services/polyllm';
 import { SqlEditor } from './SqlEditor';
 import { api } from '../services/api';
@@ -12,7 +12,18 @@ interface AIAssistantPanelProps {
 }
 
 export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
-    const { user } = useAppStore();
+    const {
+        user,
+        availableModels,
+        selectedModelId,
+        setSelectedModelId,
+        fetchModels
+    } = useAppStore();
+
+    useEffect(() => {
+        fetchModels();
+    }, [fetchModels]);
+
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +75,7 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
 
         try {
             // Pass recent history to the service
-            const replyText = await polyGlobalService.generateResponse(userMsg.text, messages);
+            const replyText = await polyGlobalService.generateResponse(userMsg.text, messages, selectedModelId);
 
             const aiMsg: ChatMessage = { role: 'model', text: replyText };
             setMessages(prev => [...prev, aiMsg]);
@@ -114,9 +125,29 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
             <div className={`fixed inset-y-0 right-0 w-full sm:w-[700px] bg-[#1a1b26] border-l border-slate-700 shadow-2xl transform transition-transform duration-300 z-[60] flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 {/* Header */}
                 <div className="h-16 border-b border-slate-700 flex items-center justify-between px-4 bg-[#16161e] flex-shrink-0">
-                    <div className="flex items-center gap-2 text-cyan-400">
-                        <Sparkles className="w-5 h-5" />
-                        <span className="font-bold tracking-wide">AI Query Assistant</span>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-cyan-400">
+                            <Sparkles className="w-5 h-5" />
+                            <span className="font-bold tracking-wide hidden sm:block">AI Query Assistant</span>
+                        </div>
+
+                        <div className="relative group">
+                            <select
+                                value={selectedModelId}
+                                onChange={(e) => setSelectedModelId(e.target.value)}
+                                className="bg-slate-800 text-xs font-medium text-slate-300 border border-slate-600 rounded px-3 py-1.5 pr-8 appearance-none focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 cursor-pointer hover:bg-slate-700 transition-colors"
+                            >
+                                {availableModels.map(model => (
+                                    <option key={model.id} value={model.id} className="bg-slate-800 text-slate-300">
+                                        {model.id}
+                                    </option>
+                                ))}
+                                {availableModels.length === 0 && <option value="gpt-4o">gpt-4o</option>}
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 group-hover:text-cyan-400 transition-colors">
+                                <ChevronDown className="w-3.5 h-3.5" />
+                            </div>
+                        </div>
                     </div>
                     <button onClick={onClose} className="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-700 transition-colors">
                         <X className="w-5 h-5" />

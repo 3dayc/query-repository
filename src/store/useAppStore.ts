@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../services/api';
+import { polyGlobalService, type AIModel } from '../services/polyllm';
 import type { DbFolder, DbTable } from '../types/db';
 
 interface AppState {
@@ -10,6 +11,12 @@ interface AppState {
     isReady: boolean;
     expandedFolderIds: string[];
     targetQueryId: string | null; // For smart navigation
+
+    // AI Models
+    availableModels: AIModel[];
+    selectedModelId: string;
+    fetchModels: () => Promise<void>;
+    setSelectedModelId: (id: string) => void;
 
     // Actions
     fetchData: () => Promise<void>;
@@ -150,6 +157,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     isAIPanelOpen: false,
     toggleAIPanel: () => set((state) => ({ isAIPanelOpen: !state.isAIPanelOpen })),
     setAIPanelOpen: (isOpen) => set({ isAIPanelOpen: isOpen }),
+
+    // AI Models
+    availableModels: [],
+    selectedModelId: 'gpt-4o',
+    fetchModels: async () => {
+        const models = await polyGlobalService.getModels();
+        set({ availableModels: models });
+    },
+    setSelectedModelId: (id) => set({ selectedModelId: id }),
 
     setFolders: (folders) => set({ folders }),
     setTables: (tables) => set({ tables }),

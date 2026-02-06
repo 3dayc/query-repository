@@ -2,17 +2,59 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 
 const API_KEY = import.meta.env.VITE_POLYLLM_API_KEY;
-const API_URL = 'https://api.ynext.cloud/services/polyLLM/chat/completions';
+const BASE_URL = 'https://api.ynext.cloud/services/polyLLM';
+const CHAT_URL = `${BASE_URL}/chat/completions`;
+const MODELS_URL = `${BASE_URL}/models`;
 
 export interface ChatMessage {
-    role: 'user' | 'model'; // Keep 'model' to match UI state, but map to 'assistant' for API
+    role: 'user' | 'model';
     text: string;
 }
 
+export interface AIModel {
+    id: string;
+    object?: string;
+    created?: number;
+    owned_by?: string;
+}
+
 export const polyGlobalService = {
+    async getModels(): Promise<AIModel[]> {
+        if (!API_KEY) {
+            console.warn("PolyLLM API Key missing for fetching models.");
+            return [];
+        }
+
+        try {
+            const response = await fetch(MODELS_URL, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`
+                }
+            });
+
+            if (!response.ok) {
+                console.warn(`Failed to fetch models (${response.status}). Using fallback.`);
+                throw new Error(response.statusText);
+            }
+
+            const data = await response.json();
+            // Expecting { data: [ { id: "..." }, ... ] }
+            return data.data || [];
+        } catch (error) {
+            // Fallback models
+            return [
+                { id: 'gpt-4o' },
+                { id: 'gpt-4-turbo' },
+                { id: 'gpt-3.5-turbo' }
+            ];
+        }
+    },
+
     async generateResponse(
         prompt: string,
-        history: ChatMessage[] = []
+        history: ChatMessage[] = [],
+        modelId: string = 'gpt-4o'
     ): Promise<string> {
         if (!API_KEY) {
             console.error("PolyLLM API Key missing. Please set VITE_POLYLLM_API_KEY in .env.local");
@@ -68,14 +110,14 @@ export const polyGlobalService = {
 
         // 4. Call PolyLLM API
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch(CHAT_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: 'gpt-4o',
+                    model: modelId,
                     messages: apiMessages
                 })
             });
@@ -87,7 +129,8 @@ export const polyGlobalService = {
                 if (response.status === 404) {
                     throw new Error("API Endpoint Not Found (404). Please contact support.");
                 }
-                throw new Error(`PolyLLM API Error: ${response.status} ${response.statusText}`);
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(`PolyLLM API Error: ${response.status} ${errData.error?.message || response.statusText}`);
             }
 
             const data = await response.json();
