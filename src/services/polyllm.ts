@@ -52,9 +52,22 @@ export const polyGlobalService = {
         }
 
         // 3. Construct Payload
+        // 'reference' 테이블의 데이터를 명시적으로 추출하여 Context에 추가
+        const refTable = tables.find(t => t.table_name.toLowerCase() === 'reference');
+        let refContext = "";
+        if (refTable && allQueries) {
+            const refQueries = allQueries.filter(q => q.table_id === refTable.id);
+            if (refQueries.length > 0) {
+                refContext = "\n\n[PAST ERROR CASES & REFERENCE (MUST FOLLOW)]\n";
+                refQueries.forEach(q => {
+                    refContext += `- CASE: ${q.title}\n  SQL: ${q.sql_code.replace(/\n/g, ' ')}\n`;
+                });
+            }
+        }
+
         const systemMessage = {
             role: "system",
-            content: `너는 항공 데이터 전문 Databricks SQL 전문가야. 모든 쿼리는 반드시 Spark SQL 문법에 맞춰서 작성해야 해. 특히 날짜 함수나 윈도우 함수 사용 시 Databricks 특유의 규칙을 엄격히 준수해. 저장된 테이블 구조와 쿼리(주석 포함) 예시를 참고해서 최적의 SQL 조합을 제안해. 그리고 reference 테이블에 기록된 과거 에러 사례들을 반드시 참조해서 최적의 SQL 조합을 제안하고 동일한 실수를 반복하지 마. 단, 답변할 때 마크다운 문법은 절대 사용하지 말고 평문으로 작성해.\n\n${schemaContext}`
+            content: `너는 항공 데이터 전문 Databricks SQL 전문가야. 모든 쿼리는 반드시 Spark SQL 문법에 맞춰서 작성해야 해. 특히 날짜 함수나 윈도우 함수 사용 시 Databricks 특유의 규칙을 엄격히 준수해. 저장된 테이블 구조와 쿼리(주석 포함) 예시를 참고해서 최적의 SQL 조합을 제안해. 그리고 아래 첨부된 'PAST ERROR CASES & REFERENCE'를 반드시 참조해서 최적의 SQL 조합을 제안하고 동일한 실수를 반복하지 마. 단, 답변할 때 마크다운 문법은 절대 사용하지 말고 평문으로 작성해.\n\n${schemaContext}${refContext}`
         };
 
         const apiMessages = [
