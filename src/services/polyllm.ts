@@ -54,7 +54,7 @@ export const polyGlobalService = {
         // 3. Construct Payload
         const systemMessage = {
             role: "system",
-            content: `너는 항공 데이터 전문 SQL PM이야. 저장된 테이블 구조와 쿼리 예시를 참고해서 최적의 SQL 조합을 제안해.\n\n${schemaContext}`
+            content: `너는 항공 데이터 전문 Databricks SQL 전문가야. 모든 쿼리는 반드시 Spark SQL 문법에 맞춰서 작성해야 해. 특히 날짜 함수나 윈도우 함수 사용 시 Databricks 특유의 규칙을 엄격히 준수해. 저장된 테이블 구조와 쿼리 예시를 참고해서 최적의 SQL 조합을 제안해.\n\n${schemaContext}`
         };
 
         const apiMessages = [
