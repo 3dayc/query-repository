@@ -58,16 +58,16 @@ export const polyGlobalService = {
         if (refTable && allQueries) {
             const refQueries = allQueries.filter(q => q.table_id === refTable.id);
             if (refQueries.length > 0) {
-                refContext = "\n\n[PAST ERROR CASES & REFERENCE (MUST FOLLOW)]\n";
+                refContext = "\n\n[MANDATORY SQL RULES (FROM ERROR LOGS)]\n다음은 과거 에러를 해결한 검증된 SQL 패턴들이다. 네가 작성하는 쿼리에 이 해결책들을 반드시 적용해라:\n";
                 refQueries.forEach(q => {
-                    refContext += `- CASE: ${q.title}\n  SQL: ${q.sql_code.replace(/\n/g, ' ')}\n`;
+                    refContext += `- Issue: ${q.title}\n  FIXED SQL: ${q.sql_code.replace(/\n/g, ' ')}\n`;
                 });
             }
         }
 
         const systemMessage = {
             role: "system",
-            content: `너는 항공 데이터 전문 Databricks SQL 전문가야. 모든 쿼리는 반드시 Spark SQL 문법을 준수해야 하며, 특히 날짜 및 윈도우 함수 사용 시 Databricks 규칙을 엄격히 따라야 해. 저장된 테이블 구조와 쿼리 예시를 기반으로 작성하되, 아래 첨부된 'PAST ERROR CASES & REFERENCE'를 최우선으로 참조하여 과거 에러와 동일한 실수를 반복하지 않는 최적의 SQL을 제안해.\n\n${schemaContext}${refContext}`
+            content: `너는 항공 데이터 전문 Databricks SQL 전문가야. 모든 쿼리는 반드시 Spark SQL 문법을 준수해야 하며, 특히 날짜 및 윈도우 함수 사용 시 Databricks 규칙을 엄격히 따라야 해. 저장된 테이블 구조와 쿼리 예시를 기반으로 작성하되, 아래 첨부된 'MANDATORY SQL RULES'를 참조하여 **생성되는 SQL 쿼리 코드에 해당 규칙을 철저히 반영**해. 답변 텍스트로 설명하기보다, 실제 작성되는 SQL 문법과 로직에 에러 해결책을 적용하는 것이 최우선이다.\n\n${schemaContext}${refContext}`
         };
 
         const apiMessages = [
