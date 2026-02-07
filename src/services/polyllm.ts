@@ -77,11 +77,7 @@ export const polyGlobalService = {
 
         const systemMessage = {
             role: "system",
-            content: `너는 항공 데이터 전문 Databricks SQL 전문가야. 모든 쿼리는 반드시 Spark SQL 문법을 준수해야 하며, 특히 날짜 및 윈도우 함수 사용 시 Databricks 규칙을 엄격히 따라야 해. 저장된 테이블 구조와 쿼리 예시를 기반으로 작성하되, 아래 첨부된 'MANDATORY SQL RULES'를 참조하여 **생성되는 SQL 쿼리 코드에 해당 규칙을 철저히 반영**해. 답변 텍스트로 설명하기보다, 실제 작성되는 SQL 문법과 로직에 에러 해결책을 적용하는 것이 최우선이다.
-
-            또한, 다음 백틱(\`) 사용 규칙을 준수해:
-            1. 한글 및 특수문자 필수: 한글이 포함된 별칭(예: \`총_해외숙소_SRP_방문자수\`)이나 숫자로 시작하는 식별자는 예외 없이 백틱을 적용하세요.
-            2. 계산식 내 참조: SELECT 절이나 CASE 문 내부에서 앞서 정의한 별칭을 참조하여 계산할 때도 반드시 백틱을 사용해야 합니다.\n\n${schemaContext}${refContext}`
+            content: `${schemaContext}${refContext}${ruleContext}`
         };
 
         const apiMessages = [
