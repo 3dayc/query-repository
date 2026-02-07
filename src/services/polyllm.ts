@@ -81,7 +81,7 @@ export const polyGlobalService = {
 
             또한, 다음 백틱(\`) 사용 규칙을 준수해:
             1. 한글 및 특수문자 필수: 한글이 포함된 별칭(예: \`총_해외숙소_SRP_방문자수\`)이나 숫자로 시작하는 식별자는 예외 없이 백틱을 적용하세요.
-            2. 계산식 내 참조: SELECT 절이나 CASE 문 내부에서 앞서 정의한 별칭을 참조하여 계산할 때도 반드시 백틱을 사용해야 합니다.\n\n${schemaContext}${refContext}${ruleContext}`
+            2. 계산식 내 참조: SELECT 절이나 CASE 문 내부에서 앞서 정의한 별칭을 참조하여 계산할 때도 반드시 백틱을 사용해야 합니다.\n\n${schemaContext}${refContext}`
         };
 
         const apiMessages = [
@@ -90,7 +90,7 @@ export const polyGlobalService = {
                 role: msg.role === 'model' ? 'assistant' : 'user',
                 content: msg.text
             })),
-            { role: "user", content: prompt }
+            { role: "user", content: prompt + (ruleContext || "") }
         ];
 
         // 4. Call PolyLLM API
