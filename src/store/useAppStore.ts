@@ -64,6 +64,12 @@ interface AppState {
     viewMode: 'main' | 'trash';
     setViewMode: (mode: 'main' | 'trash') => void;
 
+    // Edit Modal State
+    editingTable: DbTable | null;
+    setEditingTable: (table: DbTable | null) => void;
+    editingFolder: DbFolder | null;
+    setEditingFolder: (folder: DbFolder | null) => void;
+
     // Toast State
     toast: {
         message: string | null;
@@ -142,6 +148,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     viewMode: 'main',
     setViewMode: (mode) => set({ viewMode: mode }),
+
+    editingTable: null,
+    setEditingTable: (table) => set({ editingTable: table }),
+    editingFolder: null,
+    setEditingFolder: (folder) => set({ editingFolder: folder }),
 
     isMobileMenuOpen: false,
     toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),

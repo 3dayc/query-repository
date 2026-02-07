@@ -33,8 +33,7 @@ import { useAppStore } from '../store/useAppStore';
 import { api } from '../services/api';
 import clsx from 'clsx';
 import type { DbFolder, DbTable } from '../types/db';
-import { TableEditModal } from './TableEditModal';
-import { FolderEditModal } from './FolderEditModal';
+
 import { isSuperAdmin } from '../utils/whitelist';
 
 // --- Sortable Items Components ---
@@ -291,7 +290,9 @@ export function Sidebar() {
         checkUnsavedChanges,
         viewMode,
         setViewMode,
-        setAIPanelOpen
+        setAIPanelOpen,
+        setEditingTable,
+        setEditingFolder
     } = useAppStore();
 
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -305,11 +306,7 @@ export function Sidebar() {
     const [newTableDescription, setNewTableDescription] = useState('');
     const [activeFolderForNewTable, setActiveFolderForNewTable] = useState<string | null>(null);
 
-    // Edit Table State
-    const [editingTable, setEditingTable] = useState<DbTable | null>(null);
 
-    // Edit Folder State
-    const [editingFolder, setEditingFolder] = useState<DbFolder | null>(null);
 
     // Refs for Click Outside
     const createFolderFormRef = useRef<HTMLFormElement>(null);
@@ -498,26 +495,7 @@ export function Sidebar() {
         }
     };
 
-    const handleSaveEdit = async (name: string, description: string, schema: string) => {
-        if (!editingTable) return;
 
-        // Optimistic
-        const updated = { ...editingTable, table_name: name, description, schema_name: schema };
-        updateTable(updated);
-
-        try {
-            await api.updateTable(editingTable.id, name, description, schema);
-            // No fetch needed technically if successful
-        } catch (error) {
-            console.error(error);
-            fetchData();
-        }
-    };
-
-    const handleFolderUpdate = (updatedFolder: DbFolder) => {
-        const newFolders = folders.map(f => f.id === updatedFolder.id ? updatedFolder : f);
-        setFolders(newFolders);
-    };
 
     // Resizable Sidebar Logic
     const [sidebarWidth, setSidebarWidth] = useState(288); // Default w-72 (288px)
@@ -735,21 +713,7 @@ export function Sidebar() {
                     </button>
                 </div>
 
-                <TableEditModal
-                    isOpen={!!editingTable}
-                    onClose={() => setEditingTable(null)}
-                    initialName={editingTable?.table_name || ''}
-                    initialDescription={editingTable?.description || ''}
-                    initialSchema={editingTable?.schema_name || ''}
-                    onSave={handleSaveEdit}
-                />
 
-                <FolderEditModal
-                    isOpen={!!editingFolder}
-                    onClose={() => setEditingFolder(null)}
-                    folder={editingFolder}
-                    onUpdate={handleFolderUpdate}
-                />
             </div>
         </>
     );
