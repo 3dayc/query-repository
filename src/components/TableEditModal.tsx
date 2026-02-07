@@ -45,7 +45,10 @@ export function TableEditModal({ isOpen, onClose, initialName, initialDescriptio
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={onClose}
+        >
             <div
                 className="w-[500px] bg-[#1a1b26] rounded-xl border border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()} // Prevent closing if click inside

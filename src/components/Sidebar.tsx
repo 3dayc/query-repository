@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
     DndContext,
     closestCenter,
@@ -311,6 +311,41 @@ export function Sidebar() {
     // Edit Folder State
     const [editingFolder, setEditingFolder] = useState<DbFolder | null>(null);
 
+    // Refs for Click Outside
+    const createFolderFormRef = useRef<HTMLFormElement>(null);
+    const createTableFormRef = useRef<HTMLFormElement>(null);
+
+    // Helpers to clear create mode when editing
+    const handleEditTable = (table: DbTable) => {
+        setIsCreatingTable(false);
+        setIsCreatingFolder(false);
+        setEditingTable(table);
+    };
+
+    const handleEditFolder = (folder: DbFolder) => {
+        setIsCreatingTable(false);
+        setIsCreatingFolder(false);
+        setEditingFolder(folder);
+    };
+
+    // Click Outside Effect
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as Node;
+            if (isCreatingFolder && createFolderFormRef.current && !createFolderFormRef.current.contains(target)) {
+                setIsCreatingFolder(false);
+            }
+            if (isCreatingTable && createTableFormRef.current && !createTableFormRef.current.contains(target)) {
+                setIsCreatingTable(false);
+            }
+        };
+
+        if (isCreatingFolder || isCreatingTable) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isCreatingFolder, isCreatingTable]);
+
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -584,7 +619,7 @@ export function Sidebar() {
                 <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/20">
                     {/* Folder Creation Form */}
                     {isCreatingFolder && (
-                        <form onSubmit={handleCreateFolder} className="mb-2 px-2 py-2 bg-slate-800/50 rounded border border-slate-700">
+                        <form ref={createFolderFormRef} onSubmit={handleCreateFolder} className="mb-2 px-2 py-2 bg-slate-800/50 rounded border border-slate-700">
                             <input
                                 autoFocus
                                 placeholder="Folder Name"
@@ -601,7 +636,7 @@ export function Sidebar() {
 
                     {/* Table Creation Form */}
                     {isCreatingTable && (
-                        <form onSubmit={handleCreateTable} className="mb-2 px-2 py-2 bg-slate-800/50 rounded border border-slate-700">
+                        <form ref={createTableFormRef} onSubmit={handleCreateTable} className="mb-2 px-2 py-2 bg-slate-800/50 rounded border border-slate-700">
                             <div className="text-xs text-slate-500 mb-1">
                                 New File in: <span className="text-slate-300">{activeFolderForNewTable ? folders.find(f => f.id === activeFolderForNewTable)?.name : 'Root'}</span>
                             </div>
@@ -646,8 +681,8 @@ export function Sidebar() {
                                             tables={tables.filter(t => t.folder_id === folder.id).sort((a, b) => a.order_index - b.order_index)}
                                             isExpanded={expandedFolderIds.includes(folder.id)}
                                             onToggle={() => toggleFolder(folder.id)}
-                                            onEditTable={setEditingTable}
-                                            onEditFolder={() => setEditingFolder(folder)}
+                                            onEditTable={handleEditTable}
+                                            onEditFolder={() => handleEditFolder(folder)}
                                         />
                                     </div>
                                 ))}
@@ -664,7 +699,7 @@ export function Sidebar() {
                                             <div key={table.id}>
                                                 <SortableFileItem
                                                     table={table}
-                                                    onEdit={() => setEditingTable(table)}
+                                                    onEdit={() => handleEditTable(table)}
                                                 />
                                             </div>
                                         ))}

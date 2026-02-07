@@ -43,8 +43,14 @@ export function FolderEditModal({ isOpen, onClose, folder, onUpdate }: FolderEdi
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200"
+                onClick={e => e.stopPropagation()}
+            >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
                     <div className="flex items-center gap-2">
                         <div className="p-2 bg-amber-100 rounded-lg">
