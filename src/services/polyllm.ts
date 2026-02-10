@@ -52,7 +52,6 @@ export const polyGlobalService = {
         }
 
         // 3. Construct Payload
-        // 3. Construct Payload
         // 'rule' 테이블 -> 'prompt' 쿼리 추출
         let ruleContext = "";
         const ruleTable = tables.find(t => t.table_name.toLowerCase() === 'rule');
