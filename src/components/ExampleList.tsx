@@ -68,18 +68,14 @@ function SortableQueryItem({ query, selectedQueryId, onSelect, onDelete }: {
                 </div>
 
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onSelect(query)}>
-                    <div className="flex items-center justify-between mb-1 pr-6">
+                    <div className="pr-6">
                         <span className={clsx(
-                            "font-medium transition-colors text-sm truncate",
+                            "font-medium transition-colors text-sm whitespace-normal break-words block leading-relaxed",
                             selectedQueryId === query.id ? "text-cyan-300" : "text-slate-300 group-hover:text-slate-200"
                         )}>
                             {query.title}
                         </span>
-
                     </div>
-                    <p className="text-xs text-slate-500 line-clamp-2 font-mono opacity-70">
-                        {query.sql_code}
-                    </p>
                 </div>
             </div>
 
