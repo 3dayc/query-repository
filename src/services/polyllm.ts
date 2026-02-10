@@ -52,41 +52,24 @@ export const polyGlobalService = {
         }
 
         // 3. Construct Payload
-        // 'reference' 테이블의 데이터를 명시적으로 추출하여 Context에 추가
-        const refTable = tables.find(t => t.table_name.toLowerCase() === 'reference');
-        let refContext = "";
-        if (refTable && allQueries) {
-            const refQueries = allQueries.filter(q => q.table_id === refTable.id);
-            if (refQueries.length > 0) {
-                refContext = "\n\n[MANDATORY SQL RULES (FROM ERROR LOGS)]\n다음은 과거 에러를 해결한 검증된 SQL 패턴들이다. 네가 작성하는 쿼리에 이 해결책들을 반드시 적용해라:\n";
-                refQueries.forEach(q => {
-                    refContext += `- Issue: ${q.title}\n  FIXED SQL: ${q.sql_code.replace(/\n/g, ' ')}\n`;
-                });
-            }
-        }
-
+        // 3. Construct Payload
         // 'rule' 테이블 -> 'prompt' 쿼리 추출
         let ruleContext = "";
         const ruleTable = tables.find(t => t.table_name.toLowerCase() === 'rule');
         if (ruleTable && allQueries) {
             const promptQuery = allQueries.find(q => q.table_id === ruleTable.id && q.title.toLowerCase() === 'prompt');
             if (promptQuery) {
+                // Rule context is appended to User Message
                 ruleContext = `\n\n[USER DEFINED INSTRUCTIONS]\n${promptQuery.sql_code}\n`;
             }
         }
 
-        const systemMessage = {
-            role: "system",
-            content: `${schemaContext}${refContext}${ruleContext}`
-        };
-
         const apiMessages = [
-            systemMessage,
             ...history.map(msg => ({
                 role: msg.role === 'model' ? 'assistant' : 'user',
                 content: msg.text
             })),
-            { role: "user", content: prompt + (ruleContext || "") }
+            { role: "user", content: `${prompt}${ruleContext || ""}\n\n[DATABASE SCHEMA]\n${schemaContext}` }
         ];
 
         // 4. Call PolyLLM API
