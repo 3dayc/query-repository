@@ -3,7 +3,7 @@ import { isSuperAdmin } from '../utils/whitelist';
 import type { DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
-import { Database, Save, FilePlus, Menu, Link as LinkIcon, Pencil, Check, LogOut, Share2, Bot, User, Trash2 } from 'lucide-react';
+import { Database, Save, FilePlus, Menu, Link as LinkIcon, Pencil, Check, LogOut, Share2, Bot, User } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
@@ -299,10 +299,10 @@ export function MainContent() {
                                                             });
                                                         }
                                                     }}
-                                                    className="absolute bottom-2 right-2 p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-700/50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    title="Unshare"
+                                                    className="absolute bottom-2 right-2 p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-slate-700/50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Stop Sharing"
                                                 >
-                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                    <Share2 className="w-3.5 h-3.5" />
                                                 </button>
                                             )}
                                         </div>
