@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import type { DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
-import { Database, Save, FilePlus, Menu, Link as LinkIcon, Pencil, Check, LogOut } from 'lucide-react';
+import { Database, Save, FilePlus, Menu, Link as LinkIcon, Pencil, Check, LogOut, Share2, Bot, User } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
@@ -20,6 +20,15 @@ export function MainContent() {
     const table = tables.find(t => t.id === selectedTableId);
 
     const [queries, setQueries] = useState<DbQuery[]>([]);
+    const [sharedSessions, setSharedSessions] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!table) {
+            api.getSharedSessions()
+                .then(setSharedSessions)
+                .catch(console.error);
+        }
+    }, [table]);
     const [selectedQuery, setSelectedQuery] = useState<DbQuery | null>(null);
 
     // Editor State (for editing existing queries)
@@ -221,24 +230,66 @@ export function MainContent() {
 
             {/* Main Content Area */}
             {!table ? (
-                // Empty State
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#13141f]">
-                    <div className="max-w-md space-y-6">
-                        <div className="inline-block p-4 rounded-full bg-slate-900/50 border border-slate-800 mb-4">
-                            <span className="text-4xl">🚀</span>
-                        </div>
-                        <h1 className="text-4xl font-extrabold bg-gradient-to-br from-white to-slate-500 bg-clip-text text-transparent">
-                            항공Product SQL
-                        </h1>
-                        <p className="text-slate-400 text-lg">
-                            Select a file from the sidebar to start editing queries.
-                        </p>
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#13141f] overflow-y-auto">
+                    <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                        {/* Left: Welcome */}
+                        <div className="space-y-6 text-center md:text-left">
+                            <div className="inline-block p-4 rounded-full bg-slate-900/50 border border-slate-800 mb-4">
+                                <span className="text-4xl">🚀</span>
+                            </div>
+                            <h1 className="text-4xl font-extrabold bg-gradient-to-br from-white to-slate-500 bg-clip-text text-transparent">
+                                항공Product SQL
+                            </h1>
+                            <p className="text-slate-400 text-lg">
+                                Select a file from the sidebar to start editing queries.
+                            </p>
 
-                        <div className="flex items-center justify-center gap-2 pt-8">
-                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                            <span className="text-sm font-medium text-slate-500 tracking-wide font-mono">
-                                Supabase Connected
-                            </span>
+                            <div className="flex items-center justify-center md:justify-start gap-2 pt-8">
+                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                                <span className="text-sm font-medium text-slate-500 tracking-wide font-mono">
+                                    Supabase Connected
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Right: Shared AI Sessions */}
+                        <div className="bg-[#1a1b26] border border-slate-800 rounded-2xl p-6 text-left h-[400px] flex flex-col shadow-2xl">
+                            <h3 className="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
+                                <Share2 className="w-5 h-5 text-cyan-400" />
+                                Shared AI Insights
+                            </h3>
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                {sharedSessions.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-slate-500 text-sm">
+                                        <Bot className="w-8 h-8 mb-2 opacity-50" />
+                                        No shared sessions yet.
+                                    </div>
+                                ) : (
+                                    sharedSessions.map(session => (
+                                        <div
+                                            key={session.id}
+                                            onClick={() => {
+                                                useAppStore.getState().setTargetSessionId(session.id);
+                                                useAppStore.getState().setAIPanelOpen(true);
+                                            }}
+                                            className="p-3 bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-cyan-500/30 rounded-xl cursor-pointer transition-all group"
+                                        >
+                                            <div className="flex items-start justify-between mb-1">
+                                                <h4 className="font-medium text-slate-200 line-clamp-1 group-hover:text-cyan-400 transition-colors">
+                                                    {session.title || 'Untitled Session'}
+                                                </h4>
+                                                <span className="text-[10px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                                                    {new Date(session.shared_at || session.updated_at).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                <User className="w-3 h-3" />
+                                                <span className="truncate max-w-[150px]">{session.user_email}</span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

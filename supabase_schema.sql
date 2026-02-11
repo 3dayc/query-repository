@@ -112,3 +112,7 @@ CREATE POLICY "Allow all for chat_sessions" ON public.chat_sessions FOR ALL USIN
 
 DROP POLICY IF EXISTS "Allow all for chat_messages" ON public.chat_messages;
 CREATE POLICY "Allow all for chat_messages" ON public.chat_messages FOR ALL USING (true) WITH CHECK (true);
+
+-- 5. Shared Sessions
+ALTER TABLE public.chat_sessions ADD COLUMN IF NOT EXISTS is_shared BOOLEAN DEFAULT false;
+ALTER TABLE public.chat_sessions ADD COLUMN IF NOT EXISTS shared_at TIMESTAMP WITH TIME ZONE;

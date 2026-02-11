@@ -405,6 +405,24 @@ export const api = {
             .update({ title })
             .eq('id', sessionId);
         if (error) throw error;
+    },
+
+    shareSession: async (sessionId: string) => {
+        const { error } = await supabase
+            .from('chat_sessions')
+            .update({ is_shared: true, shared_at: new Date().toISOString() })
+            .eq('id', sessionId);
+        if (error) throw error;
+    },
+
+    getSharedSessions: async () => {
+        const { data, error } = await supabase
+            .from('chat_sessions')
+            .select('*')
+            .eq('is_shared', true)
+            .order('shared_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
     }
 };
 

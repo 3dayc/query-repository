@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, Sparkles, Copy, Check, User, MessageSquare, Plus, Trash2, History } from 'lucide-react';
+import { X, Send, Bot, Sparkles, Copy, Check, User, MessageSquare, Plus, Trash2, History, Share2 } from 'lucide-react';
 import { polyGlobalService } from '../services/polyllm';
 import { SqlEditor } from './SqlEditor';
 import { api } from '../services/api';
@@ -23,7 +23,7 @@ interface ChatMessage {
 }
 
 export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
-    const { user } = useAppStore();
+    const { user, targetSessionId, setTargetSessionId, showToast } = useAppStore();
 
     // Session State
     const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -49,6 +49,26 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
             setSessions(data);
         } catch (error) {
             console.error("Failed to load sessions:", error);
+        }
+    };
+
+    // Watch External Target Session
+    useEffect(() => {
+        if (targetSessionId) {
+            setCurrentSessionId(targetSessionId);
+            setTargetSessionId(null);
+        }
+    }, [targetSessionId, setTargetSessionId]);
+
+    const handleShare = async (e: React.MouseEvent, sessionId: string) => {
+        e.stopPropagation();
+        if (!confirm('Share this chat to the main dashboard?')) return;
+        try {
+            await api.shareSession(sessionId);
+            showToast('Chat shared successfully!', 'success');
+        } catch (error) {
+            console.error(error);
+            showToast('Failed to share chat.', 'error');
         }
     };
 
@@ -305,8 +325,8 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                                 key={session.id}
                                 onClick={() => setCurrentSessionId(session.id)}
                                 className={`group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${currentSessionId === session.id
-                                        ? 'bg-slate-800 text-cyan-400'
-                                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                                    ? 'bg-slate-800 text-cyan-400'
+                                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                                     }`}
                             >
                                 <MessageSquare className="w-4 h-4 flex-shrink-0 opacity-70" />
@@ -318,6 +338,13 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                                         {new Date(session.updated_at).toLocaleDateString()}
                                     </p>
                                 </div>
+                                <button
+                                    onClick={(e) => handleShare(e, session.id)}
+                                    className="p-1 text-slate-500 hover:text-cyan-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity mr-1"
+                                    title="Share to Dashboard"
+                                >
+                                    <Share2 className="w-3 h-3" />
+                                </button>
                                 <button
                                     onClick={(e) => handleDeleteSession(e, session.id)}
                                     className="p-1 text-slate-500 hover:text-red-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"

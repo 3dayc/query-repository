@@ -711,7 +711,7 @@ export function Sidebar() {
                         )}
                     >
                         <Trash2 className="w-4 h-4" />
-                        <span className="text-xs font-medium">Trash Bin</span>
+                        <span className="text-xs font-medium">Trash</span>
                     </button>
                 </div>
 

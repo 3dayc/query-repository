@@ -10,6 +10,7 @@ interface AppState {
     isReady: boolean;
     expandedFolderIds: string[];
     targetQueryId: string | null; // For smart navigation
+    targetSessionId: string | null;
 
     // Actions
     fetchData: () => Promise<void>;
@@ -18,6 +19,7 @@ interface AppState {
     openFolder: (folderId: string) => void;
     collapseAllFolders: () => void;
     setTargetQueryId: (id: string | null) => void;
+    setTargetSessionId: (id: string | null) => void;
 
     // Mobile Menu
     isMobileMenuOpen: boolean;
@@ -97,6 +99,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     isReady: false,
     expandedFolderIds: [],
     targetQueryId: null,
+    targetSessionId: null,
 
     // Auth Init
     user: null,
@@ -145,6 +148,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     collapseAllFolders: () => set({ expandedFolderIds: [] }),
 
     setTargetQueryId: (id) => set({ targetQueryId: id }),
+    setTargetSessionId: (id) => set({ targetSessionId: id }),
 
     viewMode: 'main',
     setViewMode: (mode) => set({ viewMode: mode }),

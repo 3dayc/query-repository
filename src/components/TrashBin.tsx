@@ -120,7 +120,7 @@ export function TrashBin() {
                     </button>
                     <div className="flex items-center gap-2 text-slate-200 text-lg font-bold">
                         <Trash2 className="w-5 h-5 text-rose-500" />
-                        <span>Trash Bin</span>
+                        <span>Trash</span>
                     </div>
                 </div>
 
