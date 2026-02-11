@@ -11,6 +11,28 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        const SESSION_TIMEOUT = 6 * 60 * 60 * 1000; // 6 hours
+        const LOGIN_KEY = 'query_repo_login_ts';
+
+        const checkExpiry = () => {
+            const stored = localStorage.getItem(LOGIN_KEY);
+            if (stored) {
+                const elapsed = Date.now() - parseInt(stored, 10);
+                if (elapsed > SESSION_TIMEOUT) {
+                    supabase.auth.signOut();
+                    localStorage.removeItem(LOGIN_KEY);
+                    useAppStore.getState().showToast('Session expired (6 hours limit). Please login again.', 'info');
+                    useAppStore.getState().setUser(null);
+                    navigate('/login', { replace: true });
+                }
+            }
+        };
+
+        // Initial Check
+        checkExpiry();
+        // Periodic Check (1 min)
+        const interval = setInterval(checkExpiry, 60 * 1000);
+
         // Check active session
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (!session) {
@@ -29,6 +51,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                 navigate('/login', { replace: true });
                 setIsLoading(false);
             } else {
+                // Set timestamp if missing (fresh session context)
+                if (!localStorage.getItem(LOGIN_KEY)) {
+                    localStorage.setItem(LOGIN_KEY, Date.now().toString());
+                }
                 setUser(session.user);
                 setIsLoading(false);
             }
@@ -36,13 +62,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && !localStorage.getItem(LOGIN_KEY)) {
+                localStorage.setItem(LOGIN_KEY, Date.now().toString());
+            }
+            if (event === 'SIGNED_OUT') {
+                localStorage.removeItem(LOGIN_KEY);
+            }
+
             if (!session) {
                 navigate('/login', { replace: true });
             } else {
                 const email = session.user.email || session.user.user_metadata?.email;
-                console.log('AuthStateChange check for:', email);
-
                 if (!isEmailWhitelisted(email)) {
                     supabase.auth.signOut();
                     useAppStore.getState().showToast(`Access Denied: ${email} is not whitelisted.`, 'error');
@@ -52,7 +83,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            subscription.unsubscribe();
+            clearInterval(interval);
+        };
     }, [navigate, setUser]);
 
     if (isLoading) {
