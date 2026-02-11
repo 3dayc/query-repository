@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { isSuperAdmin } from '../utils/whitelist';
 import type { DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
@@ -255,7 +256,7 @@ export function MainContent() {
                         </div>
 
                         {/* Right: Shared AI Sessions */}
-                        <div className="bg-[#1a1b26] border border-slate-800 rounded-2xl p-6 text-left h-[400px] flex flex-col shadow-2xl">
+                        <div className="bg-[#1a1b26] border border-slate-800 rounded-2xl p-6 text-left h-[550px] flex flex-col shadow-2xl">
                             <h3 className="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
                                 <Share2 className="w-5 h-5 text-cyan-400" />
                                 Shared AI Insights
@@ -288,7 +289,7 @@ export function MainContent() {
                                                 <User className="w-3 h-3" />
                                                 <span className="truncate max-w-[150px]">{session.user_email}</span>
                                             </div>
-                                            {user?.email === session.user_email && (
+                                            {(user?.email === session.user_email || isSuperAdmin(user?.email)) && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
