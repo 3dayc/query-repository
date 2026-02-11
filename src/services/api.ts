@@ -337,6 +337,74 @@ export const api = {
             }, { onConflict: 'user_email' });
 
         if (error) console.error('Error saving chat history:', error);
+    },
+
+    // --- Chat Sessions & Messages (New) ---
+    createSession: async (email: string, title?: string) => {
+        const { data, error } = await supabase
+            .from('chat_sessions')
+            .insert({ user_email: email, title: title || 'New Chat' })
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    getSessions: async (email: string) => {
+        const { data, error } = await supabase
+            .from('chat_sessions')
+            .select('*')
+            .eq('user_email', email)
+            .order('updated_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    },
+
+    deleteSession: async (sessionId: string) => {
+        const { error } = await supabase
+            .from('chat_sessions')
+            .delete()
+            .eq('id', sessionId);
+        if (error) throw error;
+    },
+
+    getChatMessages: async (sessionId: string) => {
+        const { data, error } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('created_at', { ascending: true });
+        if (error) throw error;
+        return data || [];
+    },
+
+    addChatMessage: async (sessionId: string, role: string, content: string) => {
+        // Map 'model' to 'assistant' for DB consistency
+        const dbRole = role === 'model' ? 'assistant' : role;
+
+        const { data, error } = await supabase
+            .from('chat_messages')
+            .insert({ session_id: sessionId, role: dbRole, content })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Update session timestamp
+        await supabase
+            .from('chat_sessions')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', sessionId);
+
+        return data;
+    },
+
+    updateSessionTitle: async (sessionId: string, title: string) => {
+        const { error } = await supabase
+            .from('chat_sessions')
+            .update({ title })
+            .eq('id', sessionId);
+        if (error) throw error;
     }
 };
 
