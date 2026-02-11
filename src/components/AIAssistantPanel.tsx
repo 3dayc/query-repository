@@ -237,7 +237,7 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
             )}
 
             {/* Panel */}
-            <div className={`fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[#1a1b26] border-l border-slate-700 shadow-2xl transform transition-transform duration-300 z-[60] flex ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className={`fixed inset-y-0 right-0 w-full sm:w-[1000px] bg-[#1a1b26] border-l border-slate-700 shadow-2xl transform transition-transform duration-300 z-[60] flex ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
 
                 {/* Chat Area (Left/Main) */}
                 <div className="flex-1 flex flex-col min-w-0 border-r border-slate-700">
@@ -323,7 +323,7 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                 </div>
 
                 {/* Sidebar (Right/History) */}
-                <div className="w-64 bg-[#13141f] flex flex-col flex-shrink-0">
+                <div className="w-80 bg-[#13141f] flex flex-col flex-shrink-0">
                     <div className="h-16 border-b border-slate-700 flex items-center justify-between px-4 bg-[#0f1016] flex-shrink-0">
                         <span className="text-slate-400 font-medium text-sm flex items-center gap-2">
                             <History className="w-4 h-4" /> History

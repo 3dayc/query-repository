@@ -178,7 +178,7 @@ export function MainContent() {
     return (
         <div className="flex-1 flex flex-col h-screen bg-[#13141f] overflow-hidden">
             {/* Global Header (Search) */}
-            <div className="h-16 border-b border-slate-800 bg-[#0f1016] flex items-center px-4 md:px-6 justify-between flex-shrink-0 z-[60] gap-4">
+            <div className="h-16 border-b border-slate-800 bg-[#0f1016] flex items-center px-4 md:px-6 justify-between flex-shrink-0 z-40 gap-4">
                 {/* Mobile Trigger */}
                 <button
                     className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
@@ -298,7 +298,7 @@ export function MainContent() {
                                                             });
                                                         }
                                                     }}
-                                                    className="absolute top-2 right-2 p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-700/50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute bottom-2 right-2 p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-700/50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                                                     title="Unshare"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
