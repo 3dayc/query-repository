@@ -259,7 +259,7 @@ export function MainContent() {
                         <div className="bg-[#1a1b26] border border-slate-800 rounded-2xl p-6 text-left h-[550px] flex flex-col shadow-2xl">
                             <h3 className="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
                                 <Share2 className="w-5 h-5 text-cyan-400" />
-                                Shared AI Insights
+                                저는 이렇게 활용했어요.
                             </h3>
                             <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                                 {sharedSessions.length === 0 ? (
