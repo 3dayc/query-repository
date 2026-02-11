@@ -121,21 +121,23 @@ function SortableFolderItem({ folder, tables, isExpanded, onToggle, onEditTable,
 
                 {/* Actions (Hover) */}
                 <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onEditFolder(); }}
-                        className="p-1 hover:bg-slate-600/50 text-slate-500 hover:text-cyan-400 rounded transition-all"
-                        title="Edit Folder"
-                    >
-                        <Pencil className="w-3 h-3" />
-                    </button>
                     {isSuperAdmin(useAppStore.getState().user?.email) && (
-                        <button
-                            onClick={handleDelete}
-                            className="p-1 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded transition-all"
-                            title="Delete Folder"
-                        >
-                            <Trash2 className="w-3 h-3" />
-                        </button>
+                        <>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onEditFolder(); }}
+                                className="p-1 hover:bg-slate-600/50 text-slate-500 hover:text-cyan-400 rounded transition-all"
+                                title="Edit Folder"
+                            >
+                                <Pencil className="w-3 h-3" />
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="p-1 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded transition-all"
+                                title="Delete Folder"
+                            >
+                                <Trash2 className="w-3 h-3" />
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
