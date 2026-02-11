@@ -234,7 +234,7 @@ export function MainContent() {
             {/* Main Content Area */}
             {!table ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#13141f] overflow-y-auto">
-                    <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
                         {/* Left: Welcome */}
                         <div className="space-y-6 text-center md:text-left">
                             <div className="inline-block p-4 rounded-full bg-slate-900/50 border border-slate-800 mb-4">
