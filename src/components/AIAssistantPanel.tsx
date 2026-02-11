@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, Sparkles, Copy, Check, User } from 'lucide-react';
-import { polyGlobalService, type ChatMessage } from '../services/polyllm';
+import { X, Send, Bot, Sparkles, Copy, Check, User, MessageSquare, Plus, Trash2, History } from 'lucide-react';
+import { polyGlobalService } from '../services/polyllm';
 import { SqlEditor } from './SqlEditor';
 import { api } from '../services/api';
-
 import { useAppStore } from '../store/useAppStore';
 
 interface AIAssistantPanelProps {
@@ -11,42 +10,65 @@ interface AIAssistantPanelProps {
     onClose: () => void;
 }
 
+interface ChatSession {
+    id: string;
+    title: string;
+    updated_at: string;
+}
+
+interface ChatMessage {
+    id?: string;
+    role: 'user' | 'assistant' | 'model';
+    content: string; // DB uses content, PolyLLM uses text (we'll map)
+}
+
 export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
     const { user } = useAppStore();
 
+    // Session State
+    const [sessions, setSessions] = useState<ChatSession[]>([]);
+    const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+    // UI State
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Load History
+    // 1. Load Sessions on Mount / User Change
     useEffect(() => {
-        async function load() {
-            if (!user?.email) {
+        if (isOpen && user?.email) {
+            loadSessions();
+        }
+    }, [isOpen, user?.email]);
+
+    const loadSessions = async () => {
+        if (!user?.email) return;
+        try {
+            const data = await api.getSessions(user.email);
+            setSessions(data);
+        } catch (error) {
+            console.error("Failed to load sessions:", error);
+        }
+    };
+
+    // 2. Load Messages when Session Changes
+    useEffect(() => {
+        async function loadMessages() {
+            if (!currentSessionId) {
                 setMessages([]);
                 return;
             }
             try {
-                const history = await api.getChatHistory(user.email);
-                if (history && Array.isArray(history)) {
-                    setMessages(history);
-                }
+                const msgs = await api.getChatMessages(currentSessionId);
+                // Map DB 'content' to local state
+                setMessages(msgs);
             } catch (error) {
-                console.error("Failed to load chat history", error);
+                console.error("Failed to load messages:", error);
             }
         }
-        load();
-    }, [user?.email]);
-
-    // Save History (with simple debounce by logic location)
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (user?.email && messages.length > 0) {
-                api.saveChatHistory(user.email, messages);
-            }
-        }, 1000); // 1s debounce
-        return () => clearTimeout(timer);
-    }, [messages, user?.email]);
+        loadMessages();
+    }, [currentSessionId]);
 
     // Auto-scroll
     useEffect(() => {
@@ -55,31 +77,87 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
         }
     }, [messages, isOpen, isLoading]);
 
+    // Handlers
+    const handleNewChat = () => {
+        setCurrentSessionId(null);
+        setMessages([]);
+        setInput('');
+    };
+
+    const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
+        e.stopPropagation();
+        if (!confirm('Are you sure you want to delete this chat?')) return;
+
+        try {
+            await api.deleteSession(sessionId);
+            setSessions(prev => prev.filter(s => s.id !== sessionId));
+            if (currentSessionId === sessionId) {
+                handleNewChat();
+            }
+        } catch (error) {
+            console.error("Failed to delete session:", error);
+        }
+    };
+
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
+        if (!user?.email) return;
 
-        const userMsg: ChatMessage = { role: 'user', text: input };
-        setMessages(prev => [...prev, userMsg]);
+        const userInput = input;
+        const userMsg: ChatMessage = { role: 'user', content: userInput };
+
         setInput('');
+        setMessages(prev => [...prev, userMsg]);
         setIsLoading(true);
 
         try {
-            // Pass recent history to the service
-            const replyText = await polyGlobalService.generateResponse(userMsg.text, messages);
+            let sessionId = currentSessionId;
+            let isNew = false;
 
-            const aiMsg: ChatMessage = { role: 'model', text: replyText };
-            setMessages(prev => [...prev, aiMsg]);
+            // 1. Create Session if needed
+            if (!sessionId) {
+                const title = userInput.slice(0, 30) + (userInput.length > 30 ? '...' : '');
+                const session = await api.createSession(user.email, title);
+                sessionId = session.id;
+                setCurrentSessionId(sessionId);
+                isNew = true;
+            }
+
+            // 2. Save User Message
+            await api.addChatMessage(sessionId!, 'user', userInput);
+
+            // 3. Update Session List
+            if (isNew) {
+                loadSessions();
+            }
+
+            // 4. Call AI
+            // Map messages for service (needs 'text' property)
+            // Service expects { role: 'user'|'model', text: string }
+            const historyForAi = messages.map(m => ({
+                role: m.role === 'assistant' ? 'model' : m.role,
+                text: m.content
+            }));
+
+            const replyText = await polyGlobalService.generateResponse(userInput, historyForAi as any[]);
+
+            // 5. Save AI Message
+            await api.addChatMessage(sessionId!, 'assistant', replyText);
+
+            // 6. Update UI
+            setMessages(prev => [...prev, { role: 'assistant', content: replyText }]);
+
         } catch (error: any) {
             console.error("PolyLLM Error:", error);
             const errorMessage = error?.message || "Unknown error occurred.";
-            setMessages(prev => [...prev, { role: 'model', text: `Connection Failed: ${errorMessage}` }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: `Connection Failed: ${errorMessage}` }]);
         } finally {
             setIsLoading(false);
         }
     };
 
     const renderMessageContent = (text: string) => {
-        // Simple parser for ```sql blocks
+        if (!text) return null;
         const parts = text.split(/(```sql[\s\S]*?```)/g);
 
         return parts.map((part, idx) => {
@@ -104,92 +182,155 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
 
     return (
         <>
-            {/* Backdrop for mobile */}
+            {/* Backdrop */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] lg:hidden"
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55]"
                     onClick={onClose}
                 />
             )}
 
-            <div className={`fixed inset-y-0 right-0 w-full sm:w-[700px] bg-[#1a1b26] border-l border-slate-700 shadow-2xl transform transition-transform duration-300 z-[60] flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                {/* Header */}
-                <div className="h-16 border-b border-slate-700 flex items-center justify-between px-4 bg-[#16161e] flex-shrink-0">
-                    <div className="flex items-center gap-2 text-cyan-400">
-                        <Sparkles className="w-5 h-5" />
-                        <span className="font-bold tracking-wide">AI Query Assistant</span>
+            {/* Panel */}
+            <div className={`fixed inset-y-0 right-0 w-full sm:w-[900px] bg-[#1a1b26] border-l border-slate-700 shadow-2xl transform transition-transform duration-300 z-[60] flex ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+
+                {/* Chat Area (Left/Main) */}
+                <div className="flex-1 flex flex-col min-w-0 border-r border-slate-700">
+                    {/* Header */}
+                    <div className="h-16 border-b border-slate-700 flex items-center justify-between px-4 bg-[#16161e] flex-shrink-0">
+                        <div className="flex items-center gap-2 text-cyan-400">
+                            <Sparkles className="w-5 h-5" />
+                            <span className="font-bold tracking-wide">AI Query Assistant</span>
+                        </div>
+
+                        {/* Mobile close button could go here */}
                     </div>
-                    <button onClick={onClose} className="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-700 transition-colors">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
 
-                {/* Chat Area */}
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 bg-[#1a1b26]">
-                    {messages.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4 opacity-50 select-none">
-                            <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
-                                <Bot className="w-8 h-8 text-cyan-400" />
+                    {/* Messages */}
+                    <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 bg-[#1a1b26]">
+                        {messages.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4 opacity-50 select-none">
+                                <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
+                                    <Bot className="w-8 h-8 text-cyan-400" />
+                                </div>
+                                <p className="text-sm text-center">
+                                    Ask me anything about your data.<br />PolyLLM is ready to help!
+                                </p>
                             </div>
-                            <p className="text-sm text-center">
-                                Ask me anything about your data.<br />PolyLLM is ready to help!
-                            </p>
-                        </div>
-                    )}
+                        )}
 
-                    {messages.map((msg, i) => (
-                        <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-cyan-600' : 'bg-emerald-600'}`}>
-                                {msg.role === 'user' ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
-                            </div>
-                            <div className={`max-w-[85%] rounded-lg px-4 py-3 text-slate-200 ${msg.role === 'user' ? 'bg-cyan-900/30 border border-cyan-800/50' : 'bg-slate-800 border border-slate-700'}`}>
-                                {renderMessageContent(msg.text)}
-                            </div>
-                        </div>
-                    ))}
-
-                    {isLoading && (
-                        <div className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full bg-emerald-600/50 flex items-center justify-center animate-pulse">
-                                <Bot className="w-5 h-5 text-white/50" />
-                            </div>
-                            <div className="bg-slate-800/50 rounded-lg px-4 py-3 flex items-center gap-3 text-sm text-slate-400">
-                                <span>PolyLLM이 쿼리를 분석 중입니다...</span>
-                                <div className="flex gap-1">
-                                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        {messages.map((msg, i) => (
+                            <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-cyan-600' : 'bg-emerald-600'}`}>
+                                    {msg.role === 'user' ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
+                                </div>
+                                <div className={`max-w-[85%] rounded-lg px-4 py-3 text-slate-200 ${msg.role === 'user' ? 'bg-cyan-900/30 border border-cyan-800/50' : 'bg-slate-800 border border-slate-700'}`}>
+                                    {renderMessageContent(msg.content)}
                                 </div>
                             </div>
+                        ))}
+
+                        {isLoading && (
+                            <div className="flex gap-3">
+                                <div className="w-8 h-8 rounded-full bg-emerald-600/50 flex items-center justify-center animate-pulse">
+                                    <Bot className="w-5 h-5 text-white/50" />
+                                </div>
+                                <div className="bg-slate-800/50 rounded-lg px-4 py-3 flex items-center gap-3 text-sm text-slate-400">
+                                    <span>Thinking...</span>
+                                    <div className="flex gap-1">
+                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Input */}
+                    <div className="p-4 bg-[#16161e] border-t border-slate-700 flex-shrink-0">
+                        <div className="flex items-center gap-2 bg-[#0f1016] border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-cyan-500 transition-all">
+                            <textarea
+                                rows={1}
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        if (e.nativeEvent.isComposing) return;
+                                        e.preventDefault();
+                                        handleSend();
+                                    }
+                                }}
+                                placeholder="Describe the query you need..."
+                                className="flex-1 bg-transparent border-none text-sm text-slate-200 focus:ring-0 focus:outline-none resize-none max-h-32 min-h-[40px] py-2.5 custom-scrollbar placeholder:text-slate-500"
+                                style={{ lineHeight: '1.5' }}
+                            />
+                            <button
+                                onClick={handleSend}
+                                disabled={isLoading || !input.trim()}
+                                className="p-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-md transition-colors flex-shrink-0 shadow-sm"
+                            >
+                                <Send className="w-4 h-4" />
+                            </button>
                         </div>
-                    )}
+                    </div>
                 </div>
 
-                {/* Input Area */}
-                <div className="p-4 bg-[#16161e] border-t border-slate-700 flex-shrink-0">
-                    <div className="flex items-center gap-2 bg-[#0f1016] border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500/50 transition-all">
-                        <textarea
-                            rows={1}
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    if (e.nativeEvent.isComposing) return;
-                                    e.preventDefault();
-                                    handleSend();
-                                }
-                            }}
-                            placeholder="Describe the query you need..."
-                            className="flex-1 bg-transparent border-none text-sm text-slate-200 focus:ring-0 focus:outline-none resize-none max-h-32 min-h-[40px] py-2.5 custom-scrollbar placeholder:text-slate-500"
-                            style={{ lineHeight: '1.5' }}
-                        />
-                        <button
-                            onClick={handleSend}
-                            disabled={isLoading || !input.trim()}
-                            className="p-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-md transition-colors flex-shrink-0 shadow-sm"
-                        >
-                            <Send className="w-4 h-4" />
+                {/* Sidebar (Right/History) */}
+                <div className="w-64 bg-[#13141f] flex flex-col flex-shrink-0">
+                    <div className="h-16 border-b border-slate-700 flex items-center justify-between px-4 bg-[#0f1016] flex-shrink-0">
+                        <span className="text-slate-400 font-medium text-sm flex items-center gap-2">
+                            <History className="w-4 h-4" /> History
+                        </span>
+                        <button onClick={onClose} className="sm:hidden p-1 text-slate-400 hover:text-white">
+                            <X className="w-5 h-5" />
                         </button>
+                        <button onClick={onClose} className="hidden sm:block p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="p-3">
+                        <button
+                            onClick={handleNewChat}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-sm font-semibold shadow-lg transition-all"
+                        >
+                            <Plus className="w-4 h-4" />
+                            New Chat
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-1 custom-scrollbar">
+                        {sessions.map(session => (
+                            <div
+                                key={session.id}
+                                onClick={() => setCurrentSessionId(session.id)}
+                                className={`group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${currentSessionId === session.id
+                                        ? 'bg-slate-800 text-cyan-400'
+                                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                                    }`}
+                            >
+                                <MessageSquare className="w-4 h-4 flex-shrink-0 opacity-70" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium truncate leading-tight">
+                                        {session.title || 'Untitled Chat'}
+                                    </p>
+                                    <p className="text-[10px] opacity-50 truncate">
+                                        {new Date(session.updated_at).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={(e) => handleDeleteSession(e, session.id)}
+                                    className="p-1 text-slate-500 hover:text-red-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <Trash2 className="w-3 h-3" />
+                                </button>
+                            </div>
+                        ))}
+                        {sessions.length === 0 && (
+                            <div className="text-center py-8 text-slate-600 text-xs">
+                                No history yet
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
