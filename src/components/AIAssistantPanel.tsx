@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, Sparkles, Copy, Check, User, MessageSquare, Plus, Trash2, History, Share2 } from 'lucide-react';
+import { X, Send, Bot, Sparkles, Copy, Check, User, MessageSquare, Plus, Trash2, History, Share2, Pencil } from 'lucide-react';
 import { polyGlobalService } from '../services/polyllm';
 import { SqlEditor } from './SqlEditor';
 import { api } from '../services/api';
@@ -23,12 +23,13 @@ interface ChatMessage {
 }
 
 export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
-    const { user, targetSessionId, setTargetSessionId, showToast } = useAppStore();
+    const { user, targetSessionId, setTargetSessionId, showToast, incrementSharedSessionVersion } = useAppStore();
 
     // Session State
     const [sessions, setSessions] = useState<ChatSession[]>([]);
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [isReadOnly, setIsReadOnly] = useState(false);
 
     // UI State
     const [input, setInput] = useState('');
@@ -60,11 +61,27 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
         }
     }, [targetSessionId, setTargetSessionId]);
 
+    const handleEditTitle = async (e: React.MouseEvent, sessionId: string, currentTitle: string) => {
+        e.stopPropagation();
+        const newTitle = prompt("Edit Chat Title:", currentTitle);
+        if (!newTitle || newTitle === currentTitle) return;
+
+        try {
+            await api.updateSessionTitle(sessionId, newTitle);
+            setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: newTitle } : s));
+            incrementSharedSessionVersion();
+        } catch (error) {
+            console.error(error);
+            showToast("Failed to update title", "error");
+        }
+    };
+
     const handleShare = async (e: React.MouseEvent, sessionId: string) => {
         e.stopPropagation();
         if (!confirm('Share this chat to the main dashboard?')) return;
         try {
             await api.shareSession(sessionId);
+            incrementSharedSessionVersion();
             showToast('Chat shared successfully!', 'success');
         } catch (error) {
             console.error(error);
@@ -77,18 +94,27 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
         async function loadMessages() {
             if (!currentSessionId) {
                 setMessages([]);
+                setIsReadOnly(false);
                 return;
             }
             try {
-                const msgs = await api.getChatMessages(currentSessionId);
-                // Map DB 'content' to local state
+                const [msgs, sessionData] = await Promise.all([
+                    api.getChatMessages(currentSessionId),
+                    api.getSession(currentSessionId)
+                ]);
                 setMessages(msgs);
+
+                if (sessionData && user?.email && sessionData.user_email !== user.email) {
+                    setIsReadOnly(true);
+                } else {
+                    setIsReadOnly(false);
+                }
             } catch (error) {
                 console.error("Failed to load messages:", error);
             }
         }
         loadMessages();
-    }, [currentSessionId]);
+    }, [currentSessionId, user?.email]);
 
     // Auto-scroll
     useEffect(() => {
@@ -271,6 +297,7 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                         <div className="flex items-center gap-2 bg-[#0f1016] border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-cyan-500 transition-all">
                             <textarea
                                 rows={1}
+                                disabled={isReadOnly}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => {
@@ -280,13 +307,13 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                                         handleSend();
                                     }
                                 }}
-                                placeholder="Describe the query you need..."
+                                placeholder={isReadOnly ? "Read Only Mode (Shared)" : "Describe the query you need..."}
                                 className="flex-1 bg-transparent border-none text-sm text-slate-200 focus:ring-0 focus:outline-none resize-none max-h-32 min-h-[40px] py-2.5 custom-scrollbar placeholder:text-slate-500"
                                 style={{ lineHeight: '1.5' }}
                             />
                             <button
                                 onClick={handleSend}
-                                disabled={isLoading || !input.trim()}
+                                disabled={isLoading || !input.trim() || isReadOnly}
                                 className="p-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-md transition-colors flex-shrink-0 shadow-sm"
                             >
                                 <Send className="w-4 h-4" />
@@ -338,6 +365,13 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                                         {new Date(session.updated_at).toLocaleDateString()}
                                     </p>
                                 </div>
+                                <button
+                                    onClick={(e) => handleEditTitle(e, session.id, session.title)}
+                                    className="p-1 text-slate-500 hover:text-cyan-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity mr-1"
+                                    title="Edit Title"
+                                >
+                                    <Pencil className="w-3 h-3" />
+                                </button>
                                 <button
                                     onClick={(e) => handleShare(e, session.id)}
                                     className="p-1 text-slate-500 hover:text-cyan-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity mr-1"

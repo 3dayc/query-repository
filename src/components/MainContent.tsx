@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import type { DbQuery } from '../types/db';
 import { SqlEditor } from './SqlEditor';
 import { ExampleList } from './ExampleList';
-import { Database, Save, FilePlus, Menu, Link as LinkIcon, Pencil, Check, LogOut, Share2, Bot, User } from 'lucide-react';
+import { Database, Save, FilePlus, Menu, Link as LinkIcon, Pencil, Check, LogOut, Share2, Bot, User, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { QueryCreationModal } from './QueryCreationModal';
@@ -15,7 +15,9 @@ export function MainContent() {
         selectedTableId, tables, openAlert, targetQueryId,
         setTargetQueryId, toggleMobileMenu, showToast,
         setHasUnsavedChanges, checkUnsavedChanges,
-        isAIPanelOpen, toggleAIPanel
+        isAIPanelOpen, toggleAIPanel,
+        sharedSessionVersion, incrementSharedSessionVersion,
+        user
     } = useAppStore();
     const table = tables.find(t => t.id === selectedTableId);
 
@@ -28,7 +30,7 @@ export function MainContent() {
                 .then(setSharedSessions)
                 .catch(console.error);
         }
-    }, [table]);
+    }, [table, sharedSessionVersion]);
     const [selectedQuery, setSelectedQuery] = useState<DbQuery | null>(null);
 
     // Editor State (for editing existing queries)
@@ -272,7 +274,7 @@ export function MainContent() {
                                                 useAppStore.getState().setTargetSessionId(session.id);
                                                 useAppStore.getState().setAIPanelOpen(true);
                                             }}
-                                            className="p-3 bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-cyan-500/30 rounded-xl cursor-pointer transition-all group"
+                                            className="relative p-3 bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-cyan-500/30 rounded-xl cursor-pointer transition-all group"
                                         >
                                             <div className="flex items-start justify-between mb-1">
                                                 <h4 className="font-medium text-slate-200 line-clamp-1 group-hover:text-cyan-400 transition-colors">
@@ -286,6 +288,22 @@ export function MainContent() {
                                                 <User className="w-3 h-3" />
                                                 <span className="truncate max-w-[150px]">{session.user_email}</span>
                                             </div>
+                                            {user?.email === session.user_email && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (confirm('Stop sharing this session?')) {
+                                                            api.unshareSession(session.id).then(() => {
+                                                                incrementSharedSessionVersion();
+                                                            });
+                                                        }
+                                                    }}
+                                                    className="absolute top-2 right-2 p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-700/50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Unshare"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                         </div>
                                     ))
                                 )}

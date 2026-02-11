@@ -415,6 +415,24 @@ export const api = {
         if (error) throw error;
     },
 
+    unshareSession: async (sessionId: string) => {
+        const { error } = await supabase
+            .from('chat_sessions')
+            .update({ is_shared: false })
+            .eq('id', sessionId);
+        if (error) throw error;
+    },
+
+    getSession: async (sessionId: string) => {
+        const { data, error } = await supabase
+            .from('chat_sessions')
+            .select('*')
+            .eq('id', sessionId)
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
     getSharedSessions: async () => {
         const { data, error } = await supabase
             .from('chat_sessions')
