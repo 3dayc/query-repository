@@ -17,6 +17,7 @@ export function SearchBar() {
         openFolder,
         setSelectedTableId,
         setTargetQueryId,
+        setAIPanelOpen
     } = useAppStore();
 
     // Debounce Search
@@ -62,6 +63,7 @@ export function SearchBar() {
 
         setIsOpen(false);
         setIsMobileSearchOpen(false);
+        setAIPanelOpen(false); // Close AI Panel
         setQuery('');
     };
 
