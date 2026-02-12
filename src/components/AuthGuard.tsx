@@ -19,6 +19,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             if (stored) {
                 const elapsed = Date.now() - parseInt(stored, 10);
                 if (elapsed > SESSION_TIMEOUT) {
+                    console.log('Session expired. Logging out.');
                     supabase.auth.signOut();
                     localStorage.removeItem(LOGIN_KEY);
                     useAppStore.getState().showToast('Session expired (6 hours limit). Please login again.', 'info');
@@ -33,6 +34,20 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         // Periodic Check (1 min)
         const interval = setInterval(checkExpiry, 60 * 1000);
 
+        // Listen for storage changes (multi-tab sync)
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === LOGIN_KEY && e.newValue === null) {
+                // Logged out in another tab
+                supabase.auth.signOut();
+                useAppStore.getState().setUser(null);
+                navigate('/login', { replace: true });
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+
+        // Check on focus (waking up from sleep/background)
+        window.addEventListener('focus', checkExpiry);
+
         // Check active session
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (!session) {
@@ -42,7 +57,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             }
 
             const email = session.user.email || session.user.user_metadata?.email;
-            console.log('Auth check for:', email);
 
             if (!isEmailWhitelisted(email)) {
                 // Not allowed
@@ -86,6 +100,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         return () => {
             subscription.unsubscribe();
             clearInterval(interval);
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('focus', checkExpiry);
         };
     }, [navigate, setUser]);
 
