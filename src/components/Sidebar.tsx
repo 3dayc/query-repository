@@ -187,6 +187,7 @@ function SortableFileItem({ table, onEdit }: SortableFileProps) {
     };
 
     const selectedTableId = useAppStore(state => state.selectedTableId);
+    const user = useAppStore(state => state.user);
     const setSelectedTableId = useAppStore(state => state.setSelectedTableId);
     const removeTable = useAppStore(state => state.removeTable);
     const fetchData = useAppStore(state => state.fetchData); // Fallback
@@ -259,14 +260,16 @@ function SortableFileItem({ table, onEdit }: SortableFileProps) {
                 >
                     <Pencil className="w-3 h-3" />
                 </button>
-                <button
-                    onClick={handleDelete}
-                    className="p-1 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded transition-all"
-                    title="Delete"
-                    onPointerDown={(e) => e.stopPropagation()} // Extra safety for dnd-kit
-                >
-                    <Trash2 className="w-3 h-3" />
-                </button>
+                {isSuperAdmin(user?.email) && (
+                    <button
+                        onClick={handleDelete}
+                        className="p-1 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded transition-all"
+                        title="Delete"
+                        onPointerDown={(e) => e.stopPropagation()} // Extra safety for dnd-kit
+                    >
+                        <Trash2 className="w-3 h-3" />
+                    </button>
+                )}
             </div>
         </div>
     );
