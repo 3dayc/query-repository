@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, Sparkles, Copy, Check, User, MessageSquare, Plus, Trash2, History, Share2, Pencil } from 'lucide-react';
+import { X, Send, Bot, Sparkles, Copy, Check, User, MessageSquare, Plus, Trash2, History, Share2, Pencil, Star } from 'lucide-react';
 import { polyGlobalService } from '../services/polyllm';
 import { SqlEditor } from './SqlEditor';
 import { api } from '../services/api';
@@ -14,6 +14,7 @@ interface ChatSession {
     id: string;
     title: string;
     updated_at: string;
+    is_shared?: boolean;
 }
 
 interface ChatMessage {
@@ -76,16 +77,24 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
         }
     };
 
-    const handleShare = async (e: React.MouseEvent, sessionId: string) => {
+    const handleShare = async (e: React.MouseEvent, session: ChatSession) => {
         e.stopPropagation();
-        if (!confirm('Share this chat to the main dashboard?')) return;
+        const isTurningOn = !session.is_shared;
+        if (!confirm(isTurningOn ? 'Share to Dashboard?' : 'Stop sharing?')) return;
+
         try {
-            await api.shareSession(sessionId);
+            if (isTurningOn) {
+                await api.shareSession(session.id);
+            } else {
+                await api.unshareSession(session.id);
+            }
             incrementSharedSessionVersion();
-            showToast('Chat shared successfully!', 'success');
+
+            setSessions(prev => prev.map(s => s.id === session.id ? { ...s, is_shared: isTurningOn } : s));
+            showToast(isTurningOn ? 'Shared!' : 'Unshared!', 'success');
         } catch (error) {
             console.error(error);
-            showToast('Failed to share chat.', 'error');
+            showToast('Failed to share toggle.', 'error');
         }
     };
 
@@ -347,7 +356,55 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-1 custom-scrollbar">
-                        {sessions.map(session => (
+                        {/* Shared Sessions */}
+                        {sessions.some(s => s.is_shared) && (
+                            <div className="mb-2">
+                                <div className="px-2 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                                    <Star className="w-3 h-3 text-cyan-400" /> Shared
+                                </div>
+                                {sessions.filter(s => s.is_shared).map(session => (
+                                    <div
+                                        key={session.id}
+                                        onClick={() => setCurrentSessionId(session.id)}
+                                        className={`group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${currentSessionId === session.id
+                                            ? 'bg-slate-800 text-cyan-400'
+                                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                                            }`}
+                                    >
+                                        <MessageSquare className="w-4 h-4 flex-shrink-0 opacity-70" />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium truncate leading-tight">
+                                                {session.title || 'Untitled Chat'}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={(e) => handleEditTitle(e, session.id, session.title)}
+                                            className="p-1 text-slate-500 hover:text-cyan-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                            title="Edit Title"
+                                        >
+                                            <Pencil className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleShare(e, session)}
+                                            className="p-1 text-cyan-400 bg-slate-800/50 hover:bg-slate-700 rounded opacity-100 transition-opacity mx-1"
+                                            title="Stop Sharing"
+                                        >
+                                            <Share2 className="w-3 h-3 fill-cyan-400" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleDeleteSession(e, session.id)}
+                                            className="p-1 text-slate-500 hover:text-rose-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <div className="border-b border-slate-800 my-2 mx-2" />
+                            </div>
+                        )}
+
+                        {/* Recent Sessions */}
+                        {sessions.filter(s => !s.is_shared).map(session => (
                             <div
                                 key={session.id}
                                 onClick={() => setCurrentSessionId(session.id)}
@@ -367,13 +424,13 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                                 </div>
                                 <button
                                     onClick={(e) => handleEditTitle(e, session.id, session.title)}
-                                    className="p-1 text-slate-500 hover:text-cyan-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity mr-1"
+                                    className="p-1 text-slate-500 hover:text-cyan-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                                     title="Edit Title"
                                 >
                                     <Pencil className="w-3 h-3" />
                                 </button>
                                 <button
-                                    onClick={(e) => handleShare(e, session.id)}
+                                    onClick={(e) => handleShare(e, session)}
                                     className="p-1 text-slate-500 hover:text-cyan-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity mr-1"
                                     title="Share to Dashboard"
                                 >
@@ -381,7 +438,8 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                                 </button>
                                 <button
                                     onClick={(e) => handleDeleteSession(e, session.id)}
-                                    className="p-1 text-slate-500 hover:text-red-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="p-1 text-slate-500 hover:text-rose-400 hover:bg-slate-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Delete Chat"
                                 >
                                     <Trash2 className="w-3 h-3" />
                                 </button>
