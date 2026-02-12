@@ -5,6 +5,7 @@ export const ALLOWED_EMAILS = [
     'raina@nol-universe.com',
     'amy25@nol-universe.com',
     'chloe@nol-universe.com',
+    'seewon.wee@nol-universe.com',
 ];
 
 export const SUPER_ADMIN_EMAILS = [
