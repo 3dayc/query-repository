@@ -79,12 +79,8 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
     const handleShare = async (e: React.MouseEvent, sessionId: string) => {
         e.stopPropagation();
         if (!confirm('Share this chat to the main dashboard?')) return;
-
-        // Use full_name or email prefix
-        const displayName = user?.user_metadata?.full_name || user?.email;
-
         try {
-            await api.shareSession(sessionId, displayName);
+            await api.shareSession(sessionId);
             incrementSharedSessionVersion();
             showToast('Chat shared successfully!', 'success');
         } catch (error) {

@@ -287,7 +287,7 @@ export function MainContent() {
                                             </div>
                                             <div className="flex items-center gap-2 text-xs text-slate-500">
                                                 <User className="w-3 h-3" />
-                                                <span className="truncate max-w-[150px]">{session.user_display_name || session.user_email}</span>
+                                                <span className="truncate max-w-[150px]">{session.user_email}</span>
                                             </div>
                                             {(user?.email === session.user_email || isSuperAdmin(user?.email)) && (
                                                 <button

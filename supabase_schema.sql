@@ -116,4 +116,3 @@ CREATE POLICY "Allow all for chat_messages" ON public.chat_messages FOR ALL USIN
 -- 5. Shared Sessions
 ALTER TABLE public.chat_sessions ADD COLUMN IF NOT EXISTS is_shared BOOLEAN DEFAULT false;
 ALTER TABLE public.chat_sessions ADD COLUMN IF NOT EXISTS shared_at TIMESTAMP WITH TIME ZONE;
-ALTER TABLE public.chat_sessions ADD COLUMN IF NOT EXISTS user_display_name TEXT;
