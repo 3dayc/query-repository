@@ -407,10 +407,13 @@ export const api = {
         if (error) throw error;
     },
 
-    shareSession: async (sessionId: string) => {
+    shareSession: async (sessionId: string, displayName?: string) => {
+        const updates: any = { is_shared: true, shared_at: new Date().toISOString() };
+        if (displayName) updates.user_display_name = displayName;
+
         const { error } = await supabase
             .from('chat_sessions')
-            .update({ is_shared: true, shared_at: new Date().toISOString() })
+            .update(updates)
             .eq('id', sessionId);
         if (error) throw error;
     },
