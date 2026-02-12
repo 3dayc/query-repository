@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, Sparkles, Copy, Check, User, MessageSquare, Plus, Trash2, History, Share2, Pencil, Star } from 'lucide-react';
+import { X, Send, Bot, Sparkles, Copy, Check, User, MessageSquare, Plus, Trash2, History, Share2, Pencil } from 'lucide-react';
 import { polyGlobalService } from '../services/polyllm';
 import { SqlEditor } from './SqlEditor';
 import { api } from '../services/api';
@@ -360,7 +360,7 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                         {sessions.some(s => s.is_shared) && (
                             <div className="mb-2">
                                 <div className="px-2 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                                    <Star className="w-3 h-3 text-cyan-400" /> Shared
+                                    Shared
                                 </div>
                                 {sessions.filter(s => s.is_shared).map(session => (
                                     <div
