@@ -213,7 +213,8 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
 
     const renderMessageContent = (text: string) => {
         if (!text) return null;
-        const parts = text.split(/(```sql[\s\S]*?```)/g);
+        // Split by sql or json code blocks
+        const parts = text.split(/(```(?:sql|json)[\s\S]*?```)/g);
 
         return parts.map((part, idx) => {
             if (part.startsWith('```sql')) {
@@ -228,9 +229,54 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                         </div>
                     </div>
                 );
+            } else if (part.startsWith('```json')) {
+                try {
+                    const jsonStr = part.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+                    const data = JSON.parse(jsonStr);
+
+                    if (Array.isArray(data) && data.length > 0) {
+                        const headers = Object.keys(data[0]);
+                        return (
+                            <div key={idx} className="my-4 overflow-hidden rounded-lg border border-slate-700 bg-[#0f1016] shadow-lg">
+                                <div className="bg-slate-800/50 px-3 py-2 text-[10px] font-bold text-cyan-400 border-b border-slate-700 flex items-center justify-between uppercase tracking-wider">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-3 h-3" /> Result Preview (Mock)
+                                    </div>
+                                    <span className="text-slate-500 font-normal normal-case">Example Data</span>
+                                </div>
+                                <div className="overflow-x-auto max-h-[300px]">
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead className="bg-[#1a1b26] text-slate-400 sticky top-0 z-10 shadow-sm">
+                                            <tr>
+                                                {headers.map(h => (
+                                                    <th key={h} className="px-4 py-2 font-medium border-b border-slate-700 whitespace-nowrap bg-[#1a1b26]">{h}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800/50 bg-[#13141f]">
+                                            {data.map((row, i) => (
+                                                <tr key={i} className="hover:bg-slate-800/30 transition-colors">
+                                                    {headers.map(h => (
+                                                        <td key={h} className="px-4 py-2.5 text-slate-300 whitespace-nowrap max-w-[200px] truncate border-r border-slate-800/30 last:border-r-0">
+                                                            {row[h] === null ? <span className="text-slate-600 italic">null</span> : String(row[h])}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        );
+                    }
+                } catch (e) {
+                    console.error("JSON Parse Error for Preview:", e);
+                    // Fallback to raw block
+                    return <pre key={idx} className="whitespace-pre-wrap break-words p-2 bg-slate-900 rounded text-xs text-slate-400 my-2 overflow-auto">{part}</pre>;
+                }
             } else {
                 if (!part.trim()) return null;
-                return <p key={idx} className="whitespace-pre-wrap break-words mb-2 text-sm leading-relaxed">{part}</p>;
+                return <p key={idx} className="whitespace-pre-wrap break-words mb-2 text-sm leading-relaxed text-slate-300">{part}</p>;
             }
         });
     };

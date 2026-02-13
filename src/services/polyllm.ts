@@ -68,7 +68,7 @@ export const polyGlobalService = {
                 role: msg.role === 'model' ? 'assistant' : 'user',
                 content: msg.text
             })),
-            { role: "user", content: `${prompt}${ruleContext || ""}\n\n[DATABASE SCHEMA]\n${schemaContext}` }
+            { role: "user", content: `${prompt}${ruleContext || ""}\n\n[DATABASE SCHEMA]\n${schemaContext}\n\n[OUTPUT INSTRUCTION]\nGenerate a standard SQL query compatible with Databricks.\nAlways provide a "Result Preview" as a JSON array of objects (max 5 rows) representing typical result rows for the query.\nWrap the JSON in a \`\`\`json block.\nThe keys in the JSON objects must match the columns in the SELECT clause.\nStart the JSON block with \`\`\`json and end with \`\`\`.\nExample:\n\`\`\`json\n[{"id": 1, "name": "example"}]\n\`\`\`` }
         ];
 
         // 4. Call PolyLLM API
