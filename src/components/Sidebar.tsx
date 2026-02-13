@@ -297,10 +297,13 @@ export function Sidebar() {
         setViewMode,
         setAIPanelOpen,
         setEditingTable,
-        setEditingFolder
+        setEditingFolder,
+        user
     } = useAppStore();
 
     const [activeId, setActiveId] = useState<string | null>(null);
+
+    const visibleFolders = useMemo(() => folders.filter(f => f.name !== '참조' || isSuperAdmin(user?.email)), [folders, user?.email]);
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
 
@@ -655,9 +658,9 @@ export function Sidebar() {
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                     >
-                        <SortableContext items={folders.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={visibleFolders.map(f => f.id)} strategy={verticalListSortingStrategy}>
                             <div className="space-y-1">
-                                {folders.map(folder => (
+                                {visibleFolders.map(folder => (
                                     <div key={folder.id}>
                                         <SortableFolderItem
                                             folder={folder}
