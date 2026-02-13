@@ -68,7 +68,7 @@ export const polyGlobalService = {
                 role: msg.role === 'model' ? 'assistant' : 'user',
                 content: msg.text
             })),
-            { role: "user", content: `${prompt}${ruleContext || ""}\n\n[DATABASE SCHEMA]\n${schemaContext}\n\n[OUTPUT INSTRUCTION]\nGenerate a standard SQL query compatible with Databricks.\nAlways provide a "Result Preview" as a JSON array of objects (max 5 rows) representing typical result rows for the query.\nWrap the JSON in a \`\`\`json block.\nThe keys in the JSON objects must match the columns in the SELECT clause.\nStart the JSON block with \`\`\`json and end with \`\`\`.\nExample:\n\`\`\`json\n[{"id": 1, "name": "example"}]\n\`\`\`` }
+            { role: "user", content: `${prompt}${ruleContext || ""}\n\n[DATABASE SCHEMA]\n${schemaContext}\n\n[OUTPUT INSTRUCTION]\nGenerate a standard SQL query compatible with Databricks.\n\nStructure your response strictly in this order:\n1. Brief Context (Optional)\n2. SQL Query (wrapped in \`\`\`sql)\n3. Result Preview (wrapped in \`\`\`json) - MUST appear immediately after the SQL Query block.\n4. Detailed Explanation.\n\nFor the Result Preview:\n- Provide a JSON array of objects (max 5 rows) representing typical result rows.\n- Keys must match the columns in the SELECT clause.\n- Use realistic mock data.\n- Start with \`\`\`json and end with \`\`\`.\nExample:\n\`\`\`json\n[{"id": 1, "val": 100}]\n\`\`\`` }
         ];
 
         // 4. Call PolyLLM API

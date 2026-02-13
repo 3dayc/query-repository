@@ -240,7 +240,7 @@ export function AIAssistantPanel({ isOpen, onClose }: AIAssistantPanelProps) {
                             <div key={idx} className="my-4 overflow-hidden rounded-lg border border-slate-700 bg-[#0f1016] shadow-lg">
                                 <div className="bg-slate-800/50 px-3 py-2 text-[10px] font-bold text-cyan-400 border-b border-slate-700 flex items-center justify-between uppercase tracking-wider">
                                     <div className="flex items-center gap-2">
-                                        <Sparkles className="w-3 h-3" /> Result Preview (Mock)
+                                        <Sparkles className="w-3 h-3" /> Result Preview (예시)
                                     </div>
                                     <span className="text-slate-500 font-normal normal-case">Example Data</span>
                                 </div>
